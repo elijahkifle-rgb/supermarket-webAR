@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupermarketAR — Operator Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0a0e1a;
+            color: #e8eaf0;
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(12px, 3vw, 18px);
+            color: #00ff88;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+        }
+
+        /* ── Layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        /* ── Card ── */
+        .card {
+            background: #0f1524;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .card h2 {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ── Form ── */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: #00ff88;
+        }
+
+        select option {
+            background: #0f1524;
+        }
+
+        /* ── Price row ── */
+        .price-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ── Marker selector ── */
+        .marker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .marker-btn {
+            padding: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 2px solid rgba(255,255,255,0.10);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.6);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .marker-btn:hover {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .marker-btn.selected {
+            background: rgba(0,255,136,0.15);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        /* ── Buttons ── */
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #00ff88;
+            color: #0a0e1a;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+        }
+
+        .btn-submit:hover { opacity: 0.85; }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Toast notification ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #00ff88;
+            color: #0a0e1a;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform 0.3s;
+            z-index: 999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        /* ── Offer list ── */
+        .offer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        .offer-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .offer-item.expired {
+            opacity: 0.4;
+        }
+
+        .offer-info h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .offer-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .tag-category {
+            background: rgba(67,97,238,0.2);
+            color: #7b9ff9;
+        }
+
+        .tag-marker {
+            background: rgba(0,255,136,0.15);
+            color: #00ff88;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+        }
+
+        .tag-expired {
+            background: rgba(255,107,107,0.2);
+            color: #ff6b6b;
+        }
+
+        .offer-price {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .price-now {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .price-was {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-decoration: line-through;
+        }
+
+        .price-discount {
+            font-size: 11px;
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+
+        .btn-delete {
+            background: rgba(255,107,107,0.15);
+            border: 1px solid rgba(255,107,107,0.3);
+            border-radius: 8px;
+            color: #ff6b6b;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255,107,107,0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+        }
+
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        /* ── Category filter ── */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #00ff88;
+            color: #0a0e1a;
+            border-color: #00ff88;
+            font-weight: 700;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 1100px;
+            margin: 0 auto 24px;
+        }
+
+        .stat-card {
+            background: #0f1524;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 600px) {
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+            .price-row { grid-template-columns: 1fr 1fr; }
+            .marker-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>🏪 SupermarketAR Dashboard</h1>
+    <p>Manage promotional offers for the AR overlay system</p>
+</div>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">Total Offers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="stat-active">0</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="stat-expired">0</div>
+        <div class="stat-label">Expired</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="stat-markers">0</div>
+        <div class="stat-label">Markers Used</div>
+    </div>
+</div>
+
+<!-- Main layout -->
+<div class="layout">
+
+    <!-- Left — Add offer form -->
+    <div class="card">
+        <h2>➕ Add New Offer</h2>
+
+        <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="product"
+                   placeholder="e.g. Pasta Barilla 500g"/>
+        </div>
+
+        <div class="form-group">
+            <label>Category</label>
+            <select id="category">
+                <option value="">Select category...</option>
+                <option value="food">🍝 Food</option>
+                <option value="drinks">🥤 Drinks</option>
+                <option value="home">🏠 Home</option>
+                <option value="hardware">🔧 Hardware</option>
+                <option value="fresh">🥦 Fresh</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Prices & Discount</label>
+            <div class="price-row">
+                <div>
+                    <input type="number" id="original"
+                           placeholder="Was €" step="0.01" min="0"/>
+                </div>
+                <div>
+                    <input type="number" id="price"
+                           placeholder="Now €" step="0.01" min="0"/>
+                </div>
+                <div>
+                    <input type="text" id="discount"
+                           placeholder="e.g. 30%"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Valid Until</label>
+            <input type="date" id="validUntil"/>
+        </div>
+
+        <div class="form-group">
+            <label>Shelf Marker</label>
+            <div class="marker-grid">
+                <button class="marker-btn" onclick="selectMarker('M001')">M001</button>
+                <button class="marker-btn" onclick="selectMarker('M002')">M002</button>
+                <button class="marker-btn" onclick="selectMarker('M003')">M003</button>
+                <button class="marker-btn" onclick="selectMarker('M004')">M004</button>
+                <button class="marker-btn" onclick="selectMarker('M005')">M005</button>
+                <button class="marker-btn" onclick="selectMarker('M006')">M006</button>
+                <button class="marker-btn" onclick="selectMarker('M007')">M007</button>
+                <button class="marker-btn" onclick="selectMarker('M008')">M008</button>
+            </div>
+            <input type="hidden" id="markerId"/>
+        </div>
+
+        <button class="btn-submit" id="addbtn" onclick="addOffer()">
+
+        </button>
+    </div>
+
+    <!-- Right — Active offers list -->
+    <div class="card">
+        <h2>📋 Current Offers</h2>
+
+        <div class="filter-row">
+            <button class="filter-btn active" onclick="filterOffers('all', this)">All</button>
+            <button class="filter-btn" onclick="filterOffers('food', this)">🍝 Food</button>
+            <button class="filter-btn" onclick="filterOffers('drinks', this)">🥤 Drinks</button>
+            <button class="filter-btn" onclick="filterOffers('home', this)">🏠 Home</button>
+            <button class="filter-btn" onclick="filterOffers('hardware', this)">🔧 Hardware</button>
+            <button class="filter-btn" onclick="filterOffers('fresh', this)">🥦 Fresh</button>
+        </div>
+
+        <div class="offer-list" id="offer-list">
+            <div class="empty-state">
+                <div class="icon">🏷</div>
+                <p>No offers yet — add one on the left</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+<script src="/dashboard.js"></script>
+
+</body>
+</html>
