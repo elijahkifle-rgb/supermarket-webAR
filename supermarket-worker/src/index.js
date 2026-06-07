@@ -1,184 +1,233 @@
 // supermarket-worker/src/index.js
 // SupermarketAR — Cloudflare Worker
 // Author: Elias Kifle Tsina
-//
-// Serves promotional offer data for the supermarket WebAR system.
-// Offers are stored in Cloudflare KV and served to the customer
-// AR interface when a shelf marker is detected.
-//
-// Routes:
-//   GET  /api/offers              → all active offers
-//   GET  /api/offers/:markerId    → offer for one marker
-//   GET  /api/offers?category=    → filter by category
-//   POST /api/offers              → add offer (dashboard)
-//   DELETE /api/offers/:markerId  → remove offer (dashboard)
 
-// ── Request counter ───────────────────────────────────────────────────────────
-const W   = 'https://supermarket-ar-worker.webar-football.workers.dev'
-const KEY = 'supermarket2026'
+let requestCount = 0
 
-let all = [], activeCat = 'all', chosenMarker = ''
+const rateLimitMap = new Map()
 
-function selectMarker(id) {
-	chosenMarker = id
-	document.getElementById('markerId').value = id
-	document.querySelectorAll('.marker-btn').forEach(b =>
-		b.classList.toggle('selected', b.textContent.trim() === id))
-}
-
-async function load() {
-	try {
-		const r = await fetch(`${W}/api/offers`)
-		all = await r.json()
-		console.log('[DEBUG] offers loaded:', all)
-		render(activeCat)
-		stats()
-	} catch (err) {
-		console.error('[DEBUG] load error:', err)
-		toast('Cannot load offers', true)
+function isRateLimited(ip) {
+	const now         = Date.now()
+	const windowMs    = 60 * 1000
+	const maxRequests = 500
+	if (!rateLimitMap.has(ip)) {
+		rateLimitMap.set(ip, { count: 1, start: now })
+		return false
 	}
+	const record = rateLimitMap.get(ip)
+	if (now - record.start > windowMs) {
+		rateLimitMap.set(ip, { count: 1, start: now })
+		return false
+	}
+	record.count++
+	return record.count > maxRequests
 }
-async function addOffer() {
-	const product    = document.getElementById('product').value.trim()
-	const category   = document.getElementById('category').value
-	const original   = document.getElementById('original').value
-	const price      = document.getElementById('price').value
-	const discount   = document.getElementById('discount').value.trim()
-	const validUntil = document.getElementById('validUntil').value
-	const markerId   = document.getElementById('markerId').value
 
-	if (!product)  return toast('Enter a product name', true)
-	if (!category) return toast('Select a category', true)
-	if (!price)    return toast('Enter the offer price', true)
-	if (!markerId) return toast('Select a shelf marker', true)
+export default {
+	async fetch(request, env, ctx) {
 
-	const btn = document.querySelector('.btn-submit')
-	btn.disabled = true
-	btn.textContent = 'SAVING...'
+		const allowedOrigins = (env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim())
+		const requestOrigin  = request.headers.get('Origin') || ''
 
-	try {
-		const r = await fetch(`${W}/api/offers`, {
-			method: 'POST',
-			headers: {
-				'Content-Type':    'application/json',
-				'X-Dashboard-Key': KEY
-			},
-			body: JSON.stringify({
-				markerId, product, category,
-				original:   original   ? parseFloat(original) : null,
-				price:      parseFloat(price),
-				discount:   discount   || null,
-				validUntil: validUntil || null,
-				active:     true
+		const corsHeaders = {
+			'Access-Control-Allow-Origin':  '*',
+			'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type, X-Dashboard-Key',
+		}
+
+		if (request.method === 'OPTIONS') {
+			return new Response(null, { headers: corsHeaders })
+		}
+
+		const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown'
+		if (isRateLimited(clientIP)) {
+			return new Response(JSON.stringify({ error: 'Too many requests' }), {
+				status: 429,
+				headers: { 'Content-Type': 'application/json', ...corsHeaders }
 			})
+		}
+
+		requestCount++
+		const url = new URL(request.url)
+		console.log(`[REQUEST] #${requestCount} ${request.method} ${url.pathname}`)
+
+		if (url.pathname.startsWith('/api/offers')) {
+			return handleOffers(request, url, env, corsHeaders)
+		}
+
+		return new Response(JSON.stringify({ error: 'Not found' }), {
+			status: 404,
+			headers: { 'Content-Type': 'application/json', ...corsHeaders }
 		})
-		if (!r.ok) throw new Error('Failed')
-		toast('✅ Offer added')
-		clear()
-		load()
-	} catch { toast('Could not save — try again', true) }
-	finally {
-		btn.disabled = false
-		btn.textContent = 'ADD OFFER'
 	}
 }
 
-async function deleteOffer(markerId) {
-	if (!confirm(`Remove offer for ${markerId}?`)) return
-	try {
-		await fetch(`${W}/api/offers/${markerId}`, {
-			method: 'DELETE',
-			headers: { 'X-Dashboard-Key': KEY }
+async function handleOffers(request, url, env, corsHeaders) {
+	const t0        = Date.now()
+	const pathParts = url.pathname.split('/').filter(Boolean)
+	const markerId  = pathParts[2] || null
+	const category  = url.searchParams.get('category')
+	const cloudOnly = url.searchParams.get('cloudonly') === 'true'
+
+	//  GET /api/offers/:markerId
+	if (request.method === 'GET' && markerId) {
+
+		if (cloudOnly) {
+			const r = await fetch(
+				`https://api.jsonbin.io/v3/b/${env.JSONBIN_BIN_ID}/latest`,
+				{ headers: { 'X-Master-Key': env.JSONBIN_KEY } }
+			)
+			const data    = await r.json()
+			const offers  = data.record || []
+			const offer   = offers.find(o => o.markerId === markerId)
+			const totalMs = Date.now() - t0
+
+			return new Response(JSON.stringify(offer || null), {
+				status: offer ? 200 : 404,
+				headers: {
+					...corsHeaders,
+					'Content-Type':    'application/json',
+					'X-Config':        'cloud-only',
+					'X-Total-Latency': String(totalMs)
+				}
+			})
+		}
+
+		const kvStart = Date.now()
+		const offer   = await env.OFFERS_KV.get(
+			`offer:${markerId}`, { type: 'json' }
+		)
+		const kvMs    = Date.now() - kvStart
+		const totalMs = Date.now() - t0
+
+		if (!offer) {
+			return new Response(
+				JSON.stringify({ error: 'No offer for this marker' }),
+				{
+					status: 404,
+					headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+				}
+			)
+		}
+
+		return new Response(JSON.stringify(offer), {
+			status: 200,
+			headers: {
+				...corsHeaders,
+				'Content-Type':    'application/json',
+				'X-Config':        'cloud-edge',
+				'X-KV-Latency':    String(kvMs),
+				'X-Total-Latency': String(totalMs)
+			}
 		})
-		toast('🗑 Removed')
-		load()
-	} catch { toast('Could not remove — try again', true) }
-}
-
-function filterOffers(cat, btn) {
-	activeCat = cat
-	document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
-	if (btn) btn.classList.add('active')
-	render(cat)
-}
-
-function render(cat) {
-	const list = document.getElementById('offer-list')
-	const data = cat === 'all' ? all : all.filter(o => o.category === cat)
-
-	if (!data.length) {
-		list.innerHTML = `
-            <div class="empty-state">
-                <div class="icon">🏷</div>
-                <p>${cat === 'all' ? 'No offers yet — add one on the left' : 'No offers in this category'}</p>
-            </div>`
-		return
 	}
 
-	list.innerHTML = data.map(o => {
-		const exp = o.validUntil && new Date(o.validUntil) < new Date()
-		return `
-        <div class="offer-item ${exp ? 'expired' : ''}">
-            <div class="offer-info">
-                <h3>${o.product}</h3>
-                <div class="offer-meta">
-                    <span class="tag tag-category">${o.category}</span>
-                    <span class="tag tag-marker">${o.markerId}</span>
-                    ${exp ? '<span class="tag tag-expired">Expired</span>' : ''}
-                    ${o.validUntil
-			? `<span style="font-size:11px;color:rgba(255,255,255,0.4)">Until ${o.validUntil}</span>`
-			: ''}
-                </div>
-            </div>
-            <div class="offer-price">
-                ${o.original
-			? `<div class="price-was">€${parseFloat(o.original).toFixed(2)}</div>`
-			: ''}
-                <div class="price-now">€${parseFloat(o.price).toFixed(2)}</div>
-                ${o.discount
-			? `<div class="price-discount">-${o.discount}</div>`
-			: ''}
-            </div>
-            <button class="btn-delete" onclick="deleteOffer('${o.markerId}')">🗑</button>
-        </div>`
-	}).join('')
+	// GET /api/offers
+	if (request.method === 'GET') {
+
+		if (cloudOnly) {
+			const r = await fetch(
+				`https://api.jsonbin.io/v3/b/${env.JSONBIN_BIN_ID}/latest`,
+				{ headers: { 'X-Master-Key': env.JSONBIN_KEY } }
+			)
+			const data     = await r.json()
+			const offers   = data.record || []
+			const filtered = category
+				? offers.filter(o => o.category === category)
+				: offers
+			const totalMs  = Date.now() - t0
+
+			return new Response(JSON.stringify(filtered), {
+				headers: {
+					...corsHeaders,
+					'Content-Type':    'application/json',
+					'X-Config':        'cloud-only',
+					'X-Total-Latency': String(totalMs)
+				}
+			})
+		}
+
+		const list   = await env.OFFERS_KV.list({ prefix: 'offer:' })
+		const offers = await Promise.all(
+			list.keys.map(k => env.OFFERS_KV.get(k.name, { type: 'json' }))
+		)
+		const active = offers.filter(o => {
+			if (!o) return false
+			if (!o.active) return false
+			if (o.validUntil && new Date(o.validUntil) < new Date()) return false
+			return true
+		})
+		const filtered = category
+			? active.filter(o => o.category === category)
+			: active
+		const totalMs  = Date.now() - t0
+
+		return new Response(JSON.stringify(filtered), {
+			status: 200,
+			headers: {
+				...corsHeaders,
+				'Content-Type':    'application/json',
+				'X-Config':        'cloud-edge',
+				'X-Total-Latency': String(totalMs)
+			}
+		})
+	}
+
+	//  POST
+	if (request.method === 'POST') {
+		const dashKey = request.headers.get('X-Dashboard-Key')
+		if (dashKey !== env.DASHBOARD_KEY) {
+			return new Response(JSON.stringify({ error: 'Unauthorised' }), {
+				status: 401,
+				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+			})
+		}
+		const body = await request.json()
+		if (!body.markerId || !body.product || !body.category || !body.price) {
+			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+				status: 400,
+				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+			})
+		}
+		const offer = {
+			markerId:   body.markerId,
+			product:    body.product,
+			category:   body.category,
+			original:   body.original   || null,
+			price:      body.price,
+			discount:   body.discount   || null,
+			validUntil: body.validUntil || null,
+			active:     true,
+			createdAt:  Date.now()
+		}
+		await env.OFFERS_KV.put(
+			`offer:${offer.markerId}`,
+			JSON.stringify(offer)
+		)
+		return new Response(JSON.stringify({ success: true, offer }), {
+			status: 201,
+			headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+		})
+	}
+
+	// DELETE
+	if (request.method === 'DELETE' && markerId) {
+		const dashKey = request.headers.get('X-Dashboard-Key')
+		if (dashKey !== env.DASHBOARD_KEY) {
+			return new Response(JSON.stringify({ error: 'Unauthorised' }), {
+				status: 401,
+				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+			})
+		}
+		await env.OFFERS_KV.delete(`offer:${markerId}`)
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+		})
+	}
+
+	return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+		status: 405,
+		headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+	})
 }
-
-function stats() {
-	const exp = all.filter(o =>
-		o.validUntil && new Date(o.validUntil) < new Date()
-	).length
-	document.getElementById('stat-total').textContent   = all.length
-	document.getElementById('stat-active').textContent  = all.length - exp
-	document.getElementById('stat-expired').textContent = exp
-	document.getElementById('stat-markers').textContent =
-		new Set(all.map(o => o.markerId)).size
-}
-
-function clear() {
-	['product','category','original','price','discount','validUntil','markerId']
-		.forEach(id => document.getElementById(id).value = '')
-	chosenMarker = ''
-	document.querySelectorAll('.marker-btn').forEach(b =>
-		b.classList.remove('selected'))
-}
-
-function toast(msg, err = false) {
-	const t = document.getElementById('toast')
-	t.textContent = msg
-	t.className = `toast ${err ? 'error' : ''} show`
-	setTimeout(() => t.classList.remove('show'), 3000)
-}
-
-// Init
-// Expose to global scope
-window.selectMarker = selectMarker
-window.addOffer     = addOffer
-window.deleteOffer  = deleteOffer
-window.filterOffers = filterOffers
-
-// Init after DOM ready
-const d = new Date()
-d.setDate(d.getDate() + 7)
-document.getElementById('validUntil').value = d.toISOString().split('T')[0]
-load()

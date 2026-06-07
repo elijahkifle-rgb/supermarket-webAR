@@ -13,7 +13,7 @@ export default defineConfig({
             input: {
                 arview:    resolve(__dirname, 'ar-view/index.html'),
                 dashboard: resolve(__dirname, 'dashboard/index.html'),
-                scanner:   resolve(__dirname, 'qr-scanner/index.html'),
+                operator:  resolve(__dirname, 'ar-view/operator.html'),
             },
             output: {
                 entryFileNames: 'assets/[name].js'

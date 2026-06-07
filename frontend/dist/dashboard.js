@@ -6,8 +6,10 @@ let all = [], activeCat = 'all', chosenMarker = ''
 function selectMarker(id) {
     chosenMarker = id
     document.getElementById('markerId').value = id
-    document.querySelectorAll('.marker-btn').forEach(b =>
-        b.classList.toggle('selected', b.textContent.trim() === id))
+    document.querySelectorAll('.shelf').forEach(s =>
+        s.classList.remove('selected'))
+    const shelf = document.getElementById(`shelf-${id}`)
+    if (shelf) shelf.classList.add('selected')
 }
 
 async function load() {
@@ -16,6 +18,7 @@ async function load() {
         all = await r.json()
         render(activeCat)
         stats()
+        updateStoreMap()
     } catch { toast('Cannot load offers', true) }
 }
 
@@ -54,7 +57,7 @@ async function addOffer() {
             })
         })
         if (!r.ok) throw new Error('Failed')
-        toast('✅ Offer added')
+        toast('Offer added')
         clear()
         load()
     } catch { toast('Could not save — try again', true) }
@@ -140,12 +143,25 @@ function stats() {
         new Set(all.map(o => o.markerId)).size
 }
 
+function updateStoreMap() {
+    document.querySelectorAll('.shelf-offer-tag').forEach(t =>
+        t.textContent = '')
+    document.querySelectorAll('.shelf').forEach(s =>
+        s.classList.remove('has-offer'))
+    all.forEach(o => {
+        const shelf = document.getElementById(`shelf-${o.markerId}`)
+        const tag   = document.getElementById(`tag-${o.markerId}`)
+        if (shelf) shelf.classList.add('has-offer')
+        if (tag)   tag.textContent = o.product
+    })
+}
+
 function clear() {
     ['product','category','original','price','discount','validUntil','markerId']
         .forEach(id => document.getElementById(id).value = '')
     chosenMarker = ''
-    document.querySelectorAll('.marker-btn').forEach(b =>
-        b.classList.remove('selected'))
+    document.querySelectorAll('.shelf').forEach(s =>
+        s.classList.remove('selected'))
 }
 
 function toast(msg, err = false) {
@@ -154,14 +170,15 @@ function toast(msg, err = false) {
     t.className = `toast ${err ? 'error' : ''} show`
     setTimeout(() => t.classList.remove('show'), 3000)
 }
+window.selectMarker   = selectMarker
+window.addOffer       = addOffer
+window.deleteOffer    = deleteOffer
+window.filterOffers   = filterOffers
+window.updateStoreMap = updateStoreMap
 
-const d = new Date()
-d.setDate(d.getDate() + 7)
-document.getElementById('validUntil').value = d.toISOString().split('T')[0]
-
-load()
-
-window.selectMarker = selectMarker
-window.addOffer     = addOffer
-window.deleteOffer  = deleteOffer
-window.filterOffers = filterOffers
+document.addEventListener('DOMContentLoaded', () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 7)
+    document.getElementById('validUntil').value = d.toISOString().split('T')[0]
+    load()
+})

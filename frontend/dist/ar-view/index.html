@@ -35,7 +35,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            z-index: 100;
+            z-index: 300;
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         #top-bar h1 {
@@ -57,7 +57,7 @@
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            z-index: 100;
+            z-index: 300;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             -webkit-overflow-scrolling: touch;
         }
@@ -217,8 +217,293 @@
         /* ── Hide A-Frame VR button ── */
         .a-enter-vr { display: none !important; }
         .a-enter-ar { display: none !important; }
+        /* ── Search bar ── */
+        #search-bar {
+            position: fixed;
+            top: 52px; left: 0; right: 0;
+            background: rgba(0,0,0,0.85);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 300;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        #product-search {
+            flex: 1;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+        }
+        #product-search::placeholder {
+            color: rgba(255,255,255,0.35);
+        }
+        #product-search:focus {
+            border-color: #00ff88;
+        }
+        #search-clear {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            color: white;
+            width: 30px; height: 30px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        #search-clear.show {
+            display: flex;
+        }
+
+        /* ── Filter bar moves down when search bar present ── */
+        #filter-bar {
+            top: 96px !important;
+            z-index: 300;
+        }
+
+        /* ── Scan hint moves down ── */
+        #scan-hint {
+            top: 55% !important;
+        }
+
+        /* ── Search results panel ── */
+        #search-results {
+            position: fixed;
+            top: 140px; left: 0; right: 0;
+            background: rgba(10,14,26,0.97);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            z-index: 150;
+            display: none;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        #search-results.show {
+            display: block;
+        }
+        .search-result-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover {
+            background: rgba(255,255,255,0.04);
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .result-info h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .result-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .result-cat {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(67,97,238,0.2);
+            color: #7b9ff9;
+            font-weight: 600;
+        }
+        .result-marker {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #00ff88;
+        }
+        .result-price {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .result-price-now {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+        .result-price-was {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-decoration: line-through;
+        }
+        .result-discount {
+            font-size: 11px;
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+        .search-empty {
+            padding: 32px 16px;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+        }
+        /* ── Navigation panel ── */
+        #nav-panel {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            max-height: 70vh;
+            background: rgba(10,14,26,0.97);
+            border-top: 2px solid #6495ED;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px 32px;
+            z-index: 200;
+            display: none;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        #nav-panel.show {
+            display: block;
+            transform: translateY(0);
+        }
+        #nav-panel .handle {
+            width: 36px; height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+        #nav-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            color: #6495ED;
+            margin-bottom: 4px;
+        }
+        #nav-product-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+        }
+        #map-canvas {
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            display: block;
+            margin-bottom: 16px;
+        }
+        #nav-instruction {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(100,149,237,0.1);
+            border: 1px solid rgba(100,149,237,0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+        }
+        #nav-direction {
+            font-size: 22px;
+            flex-shrink: 0;
+            min-width: 40px;
+            text-align: center;
+        }
+        #nav-text { flex: 1; }
+        #nav-text .nav-aisle {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+        #nav-text .nav-distance {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+        }
+        #nav-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            color: white;
+            width: 32px; height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+        }
+        #nav-scan-hint {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+        }
+        .result-location {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            margin-top: 2px;
+        }
+        .result-nav-btn {
+            font-size: 11px;
+            color: #6495ED;
+            font-weight: 600;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+        /* ── AR Navigation compass bar ── */
+        #nav-compass-bar {
+            position: fixed;
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(100,149,237,0.85);
+            border: 1px solid rgba(100,149,237,0.5);
+            border-radius: 20px;
+            padding: 8px 20px;
+            z-index: 150;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        #nav-compass-bar.show {
+            display: flex;
+        }
+        #nav-compass-direction {
+            font-size: 18px;
+        }
+        #nav-compass-text {
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+        }
+        #nav-compass-distance {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+        }
+        #popup-nav-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(100,149,237,0.15);
+            border: 1px solid rgba(100,149,237,0.4);
+            border-radius: 10px;
+            color: #6495ED;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #popup-nav-btn:hover {
+            background: rgba(100,149,237,0.25);
+        }
     </style>
+
   <script type="module" crossorigin src="/assets/arview.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/arsession-B9GjPnhM.js">
 </head>
 <body>
 
@@ -232,10 +517,11 @@
 <a-scene
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; matrixCodeType: 3x3;"
-        renderer="logarithmicDepthBuffer: true;"
-        vr-mode-ui="enabled: false">
+        renderer="logarithmicDepthBuffer: true; colorManagement: false;"
+        vr-mode-ui="enabled: false"
+        loading-screen="enabled: false">
 
-    <a-light type="ambient" color="#ffffff" intensity="2.0"/>
+    <a-light type="ambient" color="#ffffff" intensity="2.5"/>
 
     <a-marker
             id="main-marker"
@@ -247,73 +533,190 @@
             smooth-threshold="3"
             patternRatio="0.5">
 
-        <!-- Offer label plane -->
-        <a-plane
-                id="offer-plane"
-                position="0 0.5 0"
-                rotation="-90 0 0"
-                width="1.8" height="1.0"
-                color="#0a0e1a"
-                opacity="0.92"
-                side="double">
-        </a-plane>
+        <a-entity
+                id="offer-group"
+                position="0 0.01 0"
+                animation__float="property: position;
+                   from: 0 0.005 0;
+                   to: 0 0.04 0;
+                   dur: 1200;
+                   easing: easeInOutSine;
+                   loop: true;
+                   dir: alternate">
 
-        <!-- Product name -->
-        <a-text
-                id="ar-product"
-                value="SCANNING..."
-                position="0 0.5 0.01"
-                rotation="-90 0 0"
-                color="#00ff88"
-                scale="0.18 0.18 0.18"
-                align="center"
-                wrap-count="20">
-        </a-text>
+            <!-- Background plane  -->
+            <a-plane
+                    id="offer-plane"
+                    position="0 0 0"
+                    rotation="-90 0 0"
+                    width="2.2"
+                    height="1.6"
+                    color="#0a0e1a"
+                    opacity="1"
+                    side="double"
+                    material="color: #0a0e1a; depthWrite: false">
+            </a-plane>
 
-        <!-- Price -->
-        <a-text
-                id="ar-price"
-                value="€0.00"
-                position="0 0.5 -0.18"
-                rotation="-90 0 0"
-                color="#ffffff"
-                scale="0.28 0.28 0.28"
-                align="center">
-        </a-text>
+            <!-- Green top border -->
+            <a-plane
+                    position="0 0.003 -0.78"
+                    rotation="-90 0 0"
+                    width="2.25"
+                    height="0.08"
+                    color="#00ff88"
+                    opacity="1"
+                    material="depthWrite: false; emissive: #00ff88; emissiveIntensity: 3.0">
+            </a-plane>
 
-        <!-- Discount badge -->
-        <a-text
-                id="ar-discount"
-                value=""
-                position="0.5 0.5 -0.35"
-                rotation="-90 0 0"
-                color="#ff6b6b"
-                scale="0.18 0.18 0.18"
-                align="center">
-        </a-text>
+            <!-- Category tag -->
+            <a-text
+                    id="ar-category"
+                    value=""
+                    position="-0.5 0.01 -0.48"
+                    rotation="-90 0 0"
+                    color="#7b9ff9"
+                    scale="0.16 0.16 0.16"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
 
-        <!-- Category -->
-        <a-text
-                id="ar-category"
-                value=""
-                position="0 0.5 -0.42"
-                rotation="-90 0 0"
-                color="#7b9ff9"
-                scale="0.14 0.14 0.14"
-                align="center">
-        </a-text>
+            <!-- Product name -->
+            <a-text
+                    id="ar-product"
+                    value=""
+                    position="0 0.01 -0.25"
+                    rotation="-90 0 0"
+                    color="#00ff88"
+                    scale="0.28 0.28 0.28"
+                    align="center"
+                    wrap-count="16"
+                    material="depthTest: false; emissive: #00ff88; emissiveIntensity: 1.0"
+                    font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
+                    font-image="https://cdn.aframe.io/fonts/Exo2Bold.png">
+            </a-text>
+            <!-- Product image -->
+            <a-entity
+                    id="ar-image-wrapper"
+                    position="0.65 0.01 -0.15"
+                    scale="0.05 0.05 0.05"
+                    visible="false">
+                <a-image
+                        id="ar-product-image"
+                        src=""
+                        position="0 0 0"
+                        rotation="-90 0 0"
+                        width="0.9"
+                        height="0.9"
+                        material="depthTest: false; transparent: true; alphaTest: 0.5">
+                </a-image>
+            </a-entity>
+            <!-- Price -->
+            <a-text
+                    id="ar-price"
+                    value=""
+                    position="-0.2 0.01 0.0"
+                    rotation="-90 0 0"
+                    color="#00ff88"
+                    scale="0.38 0.38 0.38"
+                    align="center"
+                    material="depthTest: false; emissive: #00ff88; emissiveIntensity: 1.0"
+                    font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
+                    font-image="https://cdn.aframe.io/fonts/Exo2Bold.png">
+            </a-text>
+
+            <!-- Discount -->
+            <a-text
+                    id="ar-discount"
+                    value=""
+                    position="0.52 0.01 0.0"
+                    rotation="-90 0 0"
+                    color="#ff6b6b"
+                    scale="0.22 0.22 0.22"
+                    align="center"
+                    material="depthTest: false; emissive: #ff6b6b; emissiveIntensity: 0.8"
+                    font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
+                    font-image="https://cdn.aframe.io/fonts/Exo2Bold.png">
+            </a-text>
+
+            <!-- Original price -->
+            <a-text
+                    id="ar-original"
+                    value=""
+                    position="0 0.01 0.28"
+                    rotation="-90 0 0"
+                    color="#ffffff"
+                    scale="0.18 0.18 0.18"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+        </a-entity>
 
     </a-marker>
 
-    <a-entity camera></a-entity>
-</a-scene>
+    <a-entity camera>
+        <a-entity
+                id="nav-arrow-container"
+                position="0 -0.2 -2.0"
+                visible="false">
 
+            <a-cone
+                    position="0 0.2 0"
+                    rotation="0 0 0"
+                    height="0.3"
+                    radius-bottom="0.08"
+                    radius-top="0"
+                    color="#6495ED"
+                    material="color: #6495ED; emissive: #6495ED; emissiveIntensity: 1.5; depthTest: false">
+            </a-cone>
+
+            <a-cylinder
+                    position="0 -0.1 0"
+                    rotation="0 0 0"
+                    height="0.3"
+                    radius="0.03"
+                    color="#6495ED"
+                    material="color: #6495ED; emissive: #6495ED; emissiveIntensity: 1.5; depthTest: false">
+            </a-cylinder>
+
+            <!-- Direction label -->
+            <a-text
+                    id="nav-arrow-label"
+                    value="GO"
+                    position="0 0.55 0"
+                    rotation="0 0 0"
+                    color="#ffffff"
+                    scale="0.2 0.2 0.2"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+        </a-entity>
+    </a-entity>
+
+    </a-entity>
+</a-scene>
 <!-- UI overlay -->
 <div id="top-bar">
     <div>
-        <h1>🏪 SupermarketAR</h1>
+        <h1>SupermarketAR</h1>
         <div class="sub">Point at a shelf marker</div>
     </div>
+</div>
+
+<!-- Search bar -->
+<div id="search-bar">
+    <input
+            type="search"
+            id="product-search"
+            placeholder="Search pasta, tuna, tomatoes..."
+            oninput="searchOffers(this.value)"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+    />
+    <button id="search-clear" onclick="clearSearch()">✕</button>
 </div>
 
 <!-- Category filter -->
@@ -324,6 +727,11 @@
     <button class="cat-btn" onclick="setFilter('home')">🏠 Home</button>
     <button class="cat-btn" onclick="setFilter('hardware')">🔧 Hardware</button>
     <button class="cat-btn" onclick="setFilter('fresh')">🥦 Fresh</button>
+</div>
+
+<!-- Search results panel -->
+<div id="search-results">
+    <div id="search-results-list"></div>
 </div>
 
 <!-- Scan hint -->
@@ -345,7 +753,36 @@
     </div>
     <div id="offer-valid"></div>
     <div id="offer-marker"></div>
+    <button id="popup-nav-btn" onclick="navigateFromPopup()">
+        📍 Navigate to this shelf
+    </button>
 </div>
-
+<!-- Navigation panel -->
+<div id="nav-panel">
+    <div class="handle"></div>
+    <button id="nav-close" onclick="closeNavigation()">✕</button>
+    <div id="nav-title">📍 NAVIGATION</div>
+    <div id="nav-product-name">—</div>
+    <canvas id="map-canvas"></canvas>
+    <div id="nav-instruction">
+        <div id="nav-direction">→</div>
+        <div id="nav-text">
+            <div class="nav-aisle" id="nav-aisle">Aisle 1</div>
+            <div class="nav-distance" id="nav-distance">Calculating...</div>
+        </div>
+    </div>
+    <div id="nav-scan-hint">
+        Scan a marker near you to update your position
+    </div>
+</div>
+<!-- AR navigation compass bar -->
+<div id="nav-compass-bar">
+    <div id="nav-compass-direction">➡️</div>
+    <div>
+        <div id="nav-compass-text">Turn right</div>
+        <div id="nav-compass-distance">>Calculating...</div>
+    </div>
+</div>
+
 </body>
 </html>

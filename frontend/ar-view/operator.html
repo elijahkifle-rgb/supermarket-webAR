@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>SupermarketAR — Operator</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+    <style>
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            background: #0a0e1a;
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        }
+        a-scene {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 0 !important;
+        }
+
+        /* ── Top bar ── */
+        #top-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.85);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            border-bottom: 2px solid #ff6b6b;
+        }
+        #top-bar h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #ff6b6b;
+        }
+        #top-bar .sub {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+        }
+        #operator-badge {
+            background: #ff6b6b;
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* ── Scan hint ── */
+        #scan-hint {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+            pointer-events: none;
+            padding: 0 24px;
+        }
+        #scan-hint p {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 0 0 12px rgba(0,0,0,0.9);
+            margin-bottom: 6px;
+        }
+        #scan-hint .sub {
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+        }
+
+        /* ── Operator form ── */
+        #operator-form {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(10,14,26,0.98);
+            border-top: 2px solid #ff6b6b;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px 32px;
+            z-index: 200;
+            display: none;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        #operator-form.show {
+            display: block;
+            transform: translateY(0);
+        }
+        #operator-form .handle {
+            width: 36px; height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+        #operator-form h2 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #ff6b6b;
+            margin-bottom: 8px;
+        }
+        #op-marker-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 16px;
+            font-family: 'Press Start 2P', monospace;
+        }
+        .op-field { margin-bottom: 12px; }
+        .op-label {
+            display: block;
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+        .op-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .op-input:focus { border-color: #ff6b6b; }
+        .op-input option { background: #0f1524; }
+        input[type="date"].op-input {
+            color-scheme: dark;
+            color: white;
+        }
+        input[type="date"].op-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .op-price-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .op-btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        #op-save-btn {
+            padding: 14px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            transition: opacity 0.2s;
+        }
+        #op-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #op-cancel-btn {
+            padding: 14px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* ── Toast ── */
+        #op-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform 0.3s;
+            z-index: 999;
+            white-space: nowrap;
+            display: none;
+        }
+        #op-toast.show {
+            display: block;
+            transform: translateX(-50%) translateY(0);
+        }
+        #op-toast.success {
+            background: #00ff88;
+            color: #0a0e1a;
+        }
+
+        /* ── Loading ── */
+        #loading {
+            position: fixed; inset: 0;
+            background: #0a0e1a;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white; z-index: 999; gap: 20px;
+        }
+        .spinner {
+            width: 44px; height: 44px;
+            border: 3px solid rgba(255,255,255,0.10);
+            border-top-color: #ff6b6b;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+        #loading p {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .a-enter-vr { display: none !important; }
+        .a-enter-ar { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">
+    <div class="spinner"></div>
+    <p>LOADING...</p>
+</div>
+
+<!-- A-Frame AR scene -->
+<a-scene
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; matrixCodeType: 3x3;"
+        renderer="logarithmicDepthBuffer: true;  colorManagement: false;"
+        vr-mode-ui="enabled: false">
+    <a-light type="ambient" color="#ffffff" intensity="1.5"/>
+
+    <a-marker
+            id="main-marker"
+            type="pattern"
+            url="/markers/badge_of_kineton.patt"
+            smooth="true"
+            smooth-count="8"
+            smooth-tolerance="0.2"
+            smooth-threshold="3"
+            patternRatio="0.5">
+
+        <a-entity
+                id="op-group"
+                position="0 0.01 0"
+                animation__float="property: position;
+                   from: 0 0.005 0;
+                   to: 0 0.05 0;
+                   dur: 1200;
+                   easing: easeInOutSine;
+                   loop: true;
+                   dir: alternate">
+
+            <!-- Background plane -->
+            <a-plane
+                    position="0 0 0"
+                    rotation="-90 0 0"
+                    width="1.8" height="1.4"
+                    material="shader: flat; color: #0a0e1a; opacity: 1; depthWrite: false; side: double">
+            </a-plane>
+
+            <!-- Red top border -->
+            <a-plane
+                    position="0 0.004 -0.65"
+                    rotation="-90 0 0"
+                    width="1.8" height="0.06"
+                    material="shader: flat; color: #ff6b6b; emissive: #ff6b6b; emissiveIntensity: 3.0; depthWrite: false">
+            </a-plane>
+
+            <!-- OPERATOR MODE -->
+            <a-text
+                    value="[ OPERATOR MODE ]"
+                    position="0 0.01 -0.42"
+                    rotation="-90 0 0"
+                    color="#ff6b6b"
+                    scale="0.14 0.14 0.14"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Shelf ID -->
+            <a-text
+                    id="ar-shelf"
+                    value=""
+                    position="0 0.01 -0.18"
+                    rotation="-90 0 0"
+                    color="#ffffff"
+                    scale="0.26 0.26 0.26"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Divider -->
+            <a-plane
+                    position="0 0.002 0.02"
+                    rotation="-90 0 0"
+                    width="1.5" height="0.01"
+                    material="shader: flat; color: #ff6b6b; opacity: 0.3; depthWrite: false">
+            </a-plane>
+
+            <!-- Instruction -->
+            <a-text
+                    id="ar-instruction"
+                    value="POINT AT SHELF — FILL FORM"
+                    position="0 0.01 0.18"
+                    rotation="-90 0 0"
+                    color="#888888"
+                    scale="0.10 0.10 0.10"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Product saved confirmation -->
+            <a-text
+                    id="ar-product"
+                    value=""
+                    position="-0.3 0.01 0.38"
+                    rotation="-90 0 0"
+                    color="#00ff88"
+                    scale="0.18 0.18 0.18"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Product image — renders last  -->
+            <a-entity
+                    id="op-image-wrapper"
+                    position="0.45 0.02 0.15"
+                    scale="0.1 0.1 0.1"
+                    visible="false">
+                <a-image
+                        id="op-product-image"
+                        src=""
+                        position="0 0 0"
+                        rotation="-90 0 0"
+                        width="0.7"
+                        height="0.7"
+                        material="depthTest: false; transparent: true; alphaTest: 0.5">
+                </a-image>
+            </a-entity>
+
+        </a-entity>
+
+    </a-marker>
+    <a-entity camera></a-entity>
+</a-scene>
+
+<!-- Top bar -->
+<div id="top-bar">
+    <div>
+        <h1>🏪 SupermarketAR</h1>
+        <div class="sub">Point camera at shelf marker</div>
+    </div>
+    <div id="operator-badge">OPERATOR</div>
+</div>
+
+<!-- Scan hint -->
+<div id="scan-hint">
+    <p>Point at a shelf marker</p>
+    <div class="sub">Add offer form will appear</div>
+</div>
+
+<!-- Operator form -->
+<div id="operator-form">
+    <div class="handle"></div>
+    <h2>➕ ADD OFFER</h2>
+    <div id="op-marker-label">Shelf: —</div>
+
+    <div class="op-field">
+        <label class="op-label">Product Name</label>
+        <input class="op-input" id="op-product"
+               type="text" placeholder="e.g. Pasta Barilla 500g"
+               autocomplete="off"/>
+    </div>
+
+    <div class="op-field">
+        <label class="op-label">Category</label>
+        <select class="op-input" id="op-category">
+            <option value="">Select category...</option>
+            <option value="food">🍝 Food</option>
+            <option value="drinks">🥤 Drinks</option>
+            <option value="home">🏠 Home</option>
+            <option value="hardware">🔧 Hardware</option>
+            <option value="fresh">🥦 Fresh</option>
+        </select>
+    </div>
+
+    <div class="op-field">
+        <label class="op-label">Prices &amp; Discount</label>
+        <div class="op-price-row">
+            <input class="op-input" id="op-original"
+                   type="number" placeholder="Was €"
+                   step="0.01" min="0"/>
+            <input class="op-input" id="op-price"
+                   type="number" placeholder="Now €"
+                   step="0.01" min="0"/>
+            <input class="op-input" id="op-discount"
+                   type="text" placeholder="e.g. 30%"/>
+        </div>
+    </div>
+
+    <div class="op-field">
+        <label class="op-label">Valid Until</label>
+        <input class="op-input" id="op-validUntil" type="date"/>
+    </div>
+
+    <div class="op-btn-row">
+        <button id="op-cancel-btn" onclick="closeForm()">Cancel</button>
+        <button id="op-save-btn" onclick="saveOffer()">SAVE OFFER</button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="op-toast"></div>
+
+<script type="module">
+    import { initMarkerTracking } from './arsession.js'
+
+    const WORKER_URL = import.meta.env.VITE_WORKER_URL ||
+        'https://supermarket-ar-worker.webar-football.workers.dev'
+    const KEY = 'supermarket2026'
+
+    const PRODUCT_IMAGES = {
+        'heineken':  '/images/heineken2.png',
+        'peroni':    '/images/peroni.webp',
+        'barilla':   '/images/barilla.png',
+        'pasta':     '/images/barilla.png',
+        'oil':       '/images/oil.png',
+        'tomato':    '/images/tomato.png',
+        'salad':     '/images/salad.png',
+        'fruit':     '/images/fruit.png',
+        'cleaning':  '/images/cleaning.png',
+        'tools':     '/images/tools.png',
+        'beer':      '/images/heineken2.png',
+        'water':     '/images/water.png',
+        'rice':      '/images/rice.png',
+        'tuna':      '/images/tuna.png',
+    }
+    function getProductImage(productName) {
+        const name = productName.toLowerCase()
+        const match = Object.keys(PRODUCT_IMAGES).find(key =>
+            name.includes(key)
+        )
+        return match ? PRODUCT_IMAGES[match] : null
+    }
+
+    let detectedMarkerId = null
+
+    // ── Set default date to today + 7
+    const d = new Date()
+    d.setDate(d.getDate() + 7)
+    document.getElementById('op-validUntil').value =
+        d.toISOString().split('T')[0]
+    document.getElementById('loading').style.display = 'none'
+
+    // ── Reset image helper
+    function resetImage() {
+        const wrapEl = document.getElementById('op-image-wrapper')
+        if (wrapEl) {
+            wrapEl.setAttribute('visible', 'false')
+            wrapEl.removeAttribute('animation__up')
+            wrapEl.removeAttribute('animation__grow')
+            wrapEl.setAttribute('scale',    '0.1 0.1 0.1')
+            wrapEl.setAttribute('position', '0.45 0.02 0.15')
+        }
+    }
+
+    // ── Show form when marker detected
+    function showForm(markerId) {
+        detectedMarkerId = markerId
+        document.getElementById('op-marker-label').textContent = `Shelf: ${markerId}`
+        document.getElementById('op-product').value   = ''
+        document.getElementById('op-category').value  = ''
+        document.getElementById('op-original').value  = ''
+        document.getElementById('op-price').value     = ''
+        document.getElementById('op-discount').value  = ''
+        document.getElementById('ar-shelf').setAttribute('value', `Shelf: ${markerId}`)
+        document.getElementById('ar-product').setAttribute('value', '')
+        document.getElementById('ar-instruction').setAttribute('value', 'FILL FORM BELOW')
+        document.getElementById('operator-form').classList.add('show')
+        document.getElementById('scan-hint').style.display = 'none'
+        resetImage()
+    }
+
+    //  Close form — image stays visible
+    window.closeForm = function() {
+        document.getElementById('operator-form').classList.remove('show')
+    }
+
+    //  Toast
+    function toast(msg, success = true) {
+        const t = document.getElementById('op-toast')
+        t.textContent = msg
+        t.className   = `show ${success ? 'success' : ''}`
+        setTimeout(() => t.classList.remove('show'), 3000)
+    }
+
+    // ── Save offer
+    window.saveOffer = async function() {
+        const product    = document.getElementById('op-product').value.trim()
+        const category   = document.getElementById('op-category').value
+        const original   = document.getElementById('op-original').value
+        const price      = document.getElementById('op-price').value
+        const discount   = document.getElementById('op-discount').value.trim()
+        const validUntil = document.getElementById('op-validUntil').value
+
+        if (!product)  return toast('Enter product name', false)
+        if (!category) return toast('Select a category', false)
+        if (!price)    return toast('Enter offer price', false)
+
+        const btn = document.getElementById('op-save-btn')
+        btn.disabled    = true
+        btn.textContent = 'SAVING...'
+
+        try {
+            const r = await fetch(`${WORKER_URL}/api/offers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type':    'application/json',
+                    'X-Dashboard-Key': KEY
+                },
+                body: JSON.stringify({
+                    markerId:   detectedMarkerId,
+                    product,
+                    category,
+                    original:   original   ? parseFloat(original) : null,
+                    price:      parseFloat(price),
+                    discount:   discount   || null,
+                    validUntil: validUntil || null,
+                    active:     true
+                })
+            })
+
+            if (!r.ok) throw new Error('Failed')
+
+            // ── Show success on AR plane
+            toast('Offer saved!', true)
+            document.getElementById('ar-product').setAttribute('value',
+                '✓ ' + product.toUpperCase())
+            document.getElementById('ar-shelf').setAttribute('value',
+                `${detectedMarkerId} — EUR ${parseFloat(price).toFixed(2)}`)
+            document.getElementById('ar-instruction').setAttribute('value',
+                'OFFER SAVED SUCCESSFULLY')
+
+            // ── Show product image pop-out
+            const imageUrl = getProductImage(product)
+            const wrapEl   = document.getElementById('op-image-wrapper')
+            const imgEl    = document.getElementById('op-product-image')
+
+            if (wrapEl && imgEl && imageUrl) {
+                imgEl.setAttribute('src', imageUrl)
+                wrapEl.setAttribute('scale',    '0.1 0.1 0.1')
+                wrapEl.setAttribute('position', '0.45 0.02 0.15')
+                wrapEl.setAttribute('visible',  'true')
+                wrapEl.removeAttribute('animation__up')
+                wrapEl.removeAttribute('animation__grow')
+
+                setTimeout(() => {
+                    wrapEl.setAttribute('animation__up', {
+                        property: 'position',
+                        from:     '0.45 0.02 0.15',
+                        to:       '0.45 0.35 0.15',
+                        dur:      700,
+                        easing:   'easeOutBack'
+                    })
+                    wrapEl.setAttribute('animation__grow', {
+                        property: 'scale',
+                        from:     '0.1 0.1 0.1',
+                        to:       '1.2 1.2 1.2',
+                        dur:      700,
+                        easing:   'easeOutBack'
+                    })
+                }, 200)
+            }
+
+            // ── Close form after 2s — image stays on plane
+            setTimeout(() => {
+                document.getElementById('operator-form').classList.remove('show')
+            }, 2000)
+
+        } catch {
+            toast('Could not save — try again', false)
+        } finally {
+            btn.disabled    = false
+            btn.textContent = 'SAVE OFFER'
+        }
+    }
+
+    // ── Marker tracking
+    initMarkerTracking(
+        () => {
+            const params   = new URLSearchParams(window.location.search)
+            const markerId = params.get('marker') || 'M001'
+            setTimeout(() => showForm(markerId), 500)
+        },
+        () => {
+            const formOpen = document.getElementById('operator-form')
+                .classList.contains('show')
+            if (!formOpen) {
+                document.getElementById('scan-hint').style.display = 'block'
+            }
+        }
+    )
+
+    // bounce animation
+    const scene = document.querySelector('a-scene')
+    if (scene) {
+        scene.addEventListener('loaded', () => {
+            document.getElementById('loading').style.display = 'none'
+            const group = document.getElementById('op-group')
+            if (group) {
+                group.setAttribute('animation__float', {
+                    property: 'position',
+                    from: '0 0.005 0',
+                    to:   '0 0.05 0',
+                    dur:  1200,
+                    easing: 'easeInOutSine',
+                    loop: true,
+                    dir:  'alternate'
+                })
+            }
+        })
+    }
+</script>
+</body>
+</html>
