@@ -20,7 +20,7 @@
             padding: 24px 16px;
         }
 
-        /* ── Header ── */
+        /* Header */
         .header {
             text-align: center;
             margin-bottom: 32px;
@@ -39,7 +39,7 @@
             font-size: 13px;
         }
 
-        /* ── Layout ── */
+        /* Layout  */
         .layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -52,7 +52,7 @@
             .layout { grid-template-columns: 1fr; }
         }
 
-        /* ── Card ── */
+        /*  Card  */
         .card {
             background: #0f1524;
             border: 1px solid rgba(255,255,255,0.08);
@@ -71,7 +71,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
 
-        /* ── Form ── */
+        /* Form  */
         .form-group {
             margin-bottom: 16px;
         }
@@ -120,14 +120,14 @@
             background: #0f1524;
         }
 
-        /* ── Price row ── */
+        /* Price row  */
         .price-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 12px;
         }
 
-        /* ── Marker selector ── */
+        /* Marker selector  */
         .marker-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -159,7 +159,7 @@
             color: #00ff88;
         }
 
-        /* ── Buttons ── */
+        /* Buttons  */
         .btn-submit {
             width: 100%;
             padding: 14px;
@@ -179,7 +179,7 @@
         .btn-submit:hover { opacity: 0.85; }
         .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* ── Toast notification ── */
+        /*  Toast notification  */
         .toast {
             position: fixed;
             bottom: 24px;
@@ -205,7 +205,7 @@
             color: white;
         }
 
-        /* ── Offer list ── */
+        /*  Offer list  */
         .offer-list {
             display: flex;
             flex-direction: column;
@@ -303,6 +303,22 @@
 
         .btn-delete:hover {
             background: rgba(255,107,107,0.3);
+        }
+
+        .btn-edit {
+            background: rgba(0,255,136,0.10);
+            border: 1px solid rgba(0,255,136,0.25);
+            border-radius: 8px;
+            color: #00ff88;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: rgba(0,255,136,0.25);
         }
 
         .empty-state {
@@ -520,7 +536,25 @@
 </div>
 
 <div class="layout">
-
+    <div class="form-group">
+        <label>Dashboard Key</label>
+        <div style="display:flex;gap:8px;">
+            <input type="password" id="dashKey"
+                   placeholder="Enter dashboard key"/>
+            <button onclick="saveKey()"
+                    style="padding:12px 16px;
+                       background:#00ff88;
+                       color:#0a0e1a;
+                       border:none;
+                       border-radius:10px;
+                       font-weight:700;
+                       cursor:pointer;
+                       white-space:nowrap;
+                       font-size:12px;">
+                Remember
+            </button>
+        </div>
+    </div>
     <!-- Left — Add offer form -->
     <div class="card">
         <h2>➕ Add New Offer</h2>

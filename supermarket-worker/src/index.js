@@ -189,17 +189,29 @@ async function handleOffers(request, url, env, corsHeaders) {
 				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
 			})
 		}
+
+
+		//  Auto-compute discount if not provided
+		const wasPrice = parseFloat(body.original) || 0
+		const nowPrice = parseFloat(body.price)    || 0
+		let discount   = body.discount || null
+		if (!discount && wasPrice > 0 && nowPrice >= 0) {
+			discount = Math.round((1 - nowPrice / wasPrice) * 100) + '%'
+		}
+
 		const offer = {
 			markerId:   body.markerId,
 			product:    body.product,
 			category:   body.category,
-			original:   body.original   || null,
-			price:      body.price,
-			discount:   body.discount   || null,
+			original:   body.original   ? parseFloat(body.original) : null,
+			price:      parseFloat(body.price),
+			discount:   discount,
 			validUntil: body.validUntil || null,
 			active:     true,
+			updatedAt:  new Date().toISOString(),
 			createdAt:  Date.now()
 		}
+
 		await env.OFFERS_KV.put(
 			`offer:${offer.markerId}`,
 			JSON.stringify(offer)
