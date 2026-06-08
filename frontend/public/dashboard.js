@@ -11,11 +11,12 @@ function saveKey() {
     const key = document.getElementById('dashKey').value.trim()
     if (!key) return toast('Enter a key first', true)
     localStorage.setItem(KEY_STORAGE, key)
-    toast('Key saved to this browser ')
+    toast('Key saved to this browser ✅')
 }
+
 let all = [], activeCat = 'all', chosenMarker = ''
 
-// Days left until expiry
+// ── Days left until expiry
 function daysLeft(date) {
     if (!date) return 999
     return Math.ceil(
@@ -56,7 +57,7 @@ async function addOffer() {
     if (!price)    return toast('Enter the offer price', true)
     if (!markerId) return toast('Select a shelf marker', true)
 
-    // Auto-compute discount if not provided
+    // ── Auto-compute discount if not provided
     const wasVal = parseFloat(original)
     const nowVal = parseFloat(price)
     let discountVal = discount
@@ -68,25 +69,24 @@ async function addOffer() {
     btn.disabled = true
     btn.textContent = 'SAVING...'
 
-
     try {
         const r = await fetch(`${W}/api/offers`, {
             method: 'POST',
             headers: {
                 'Content-Type':    'application/json',
-                'X-Dashboard-Key': KEY
+                'X-Dashboard-Key': getKey()
             },
             body: JSON.stringify({
                 markerId, product, category,
                 original:   original   ? parseFloat(original) : null,
                 price:      parseFloat(price),
-                discount:   discountVal  || null,
-                validUntil: validUntil || null,
+                discount:   discountVal || null,
+                validUntil: validUntil  || null,
                 active:     true
             })
         })
         if (!r.ok) throw new Error('Failed')
-        toast('Offer added')
+        toast('Offer added ✅')
         clear()
         load()
     } catch { toast('Could not save — try again', true) }
@@ -95,7 +95,8 @@ async function addOffer() {
         btn.textContent = 'ADD OFFER'
     }
 }
-// ─ Edit offer
+
+// ── Edit offer — pre-fills form with existing data
 async function editOffer(markerId) {
     const offer = all.find(o => o.markerId === markerId)
     if (!offer) return
@@ -116,7 +117,7 @@ async function deleteOffer(markerId) {
     try {
         await fetch(`${W}/api/offers/${markerId}`, {
             method: 'DELETE',
-            headers: { 'X-Dashboard-Key': KEY }
+            headers: { 'X-Dashboard-Key': getKey() }
         })
         toast('🗑 Removed')
         load()
@@ -150,7 +151,7 @@ function render(cat) {
         const exp = o.validUntil && new Date(o.validUntil) < new Date()
         const d   = daysLeft(o.validUntil)
         const status = d < 0
-            ? 'expired'
+            ? '⛔ expired'
             : d <= 3
                 ? `⏳ ${d}d left`
                 : `✅ ${d}d left`
@@ -162,9 +163,9 @@ function render(cat) {
                     <span class="tag tag-category">${o.category}</span>
                     <span class="tag tag-marker">${o.markerId}</span>
                     ${exp ? '<span class="tag tag-expired">Expired</span>' : ''}
-                   ${o.validUntil
+                    ${o.validUntil
             ? `<span style="font-size:11px;color:rgba(255,255,255,0.4)">
-                   ${status}</span>`
+                               ${status}</span>`
             : ''}
                 </div>
             </div>
@@ -177,8 +178,10 @@ function render(cat) {
             ? `<div class="price-discount">-${o.discount}</div>`
             : ''}
             </div>
-            <button class="btn-edit" onclick="editOffer('${o.markerId}')">✏️</button>
-            <button class="btn-delete" onclick="deleteOffer('${o.markerId}')">🗑</button>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+                <button class="btn-edit" onclick="editOffer('${o.markerId}')">✏️</button>
+                <button class="btn-delete" onclick="deleteOffer('${o.markerId}')">🗑</button>
+            </div>
         </div>`
     }).join('')
 }
@@ -208,13 +211,13 @@ function updateStoreMap() {
 }
 
 function clear() {
-        ['product','category','original','price','discount','validUntil','markerId']
-            .forEach(id => document.getElementById(id).value = '')
-        chosenMarker = ''
-        document.querySelectorAll('.shelf').forEach(s =>
-            s.classList.remove('selected'))
-        document.getElementById('addbtn').textContent = 'ADD OFFER'
-    }
+    ['product','category','original','price','discount','validUntil','markerId']
+        .forEach(id => document.getElementById(id).value = '')
+    chosenMarker = ''
+    document.querySelectorAll('.shelf').forEach(s =>
+        s.classList.remove('selected'))
+    document.getElementById('addbtn').textContent = 'ADD OFFER'
+}
 
 function toast(msg, err = false) {
     const t = document.getElementById('toast')
@@ -222,8 +225,10 @@ function toast(msg, err = false) {
     t.className = `toast ${err ? 'error' : ''} show`
     setTimeout(() => t.classList.remove('show'), 3000)
 }
+
 window.selectMarker   = selectMarker
 window.addOffer       = addOffer
+window.editOffer      = editOffer
 window.deleteOffer    = deleteOffer
 window.filterOffers   = filterOffers
 window.updateStoreMap = updateStoreMap
@@ -234,10 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
     d.setDate(d.getDate() + 7)
     document.getElementById('validUntil').value = d.toISOString().split('T')[0]
 
-    // Load saved key into input field
+    // ── Load saved key into input field
     const saved = localStorage.getItem(KEY_STORAGE)
     if (saved) document.getElementById('dashKey').value = saved
 
     load()
+    setInterval(load, 30000)
 })
-

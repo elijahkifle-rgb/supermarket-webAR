@@ -20,7 +20,6 @@
             padding: 24px 16px;
         }
 
-        /* Header */
         .header {
             text-align: center;
             margin-bottom: 32px;
@@ -39,7 +38,6 @@
             font-size: 13px;
         }
 
-        /* Layout  */
         .layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -52,7 +50,6 @@
             .layout { grid-template-columns: 1fr; }
         }
 
-        /*  Card  */
         .card {
             background: #0f1524;
             border: 1px solid rgba(255,255,255,0.08);
@@ -71,10 +68,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
 
-        /* Form  */
-        .form-group {
-            margin-bottom: 16px;
-        }
+        .form-group { margin-bottom: 16px; }
 
         label {
             display: block;
@@ -99,13 +93,9 @@
             transition: border-color 0.2s;
         }
 
-        input:focus, select:focus {
-            border-color: #00ff88;
-        }
-        input[type="date"] {
-            color-scheme: dark;
-            color: white;
-        }
+        input:focus, select:focus { border-color: #00ff88; }
+
+        input[type="date"] { color-scheme: dark; color: white; }
 
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
@@ -113,53 +103,14 @@
             opacity: 0.7;
         }
 
-        input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            opacity: 1;
-        }
-        select option {
-            background: #0f1524;
-        }
+        select option { background: #0f1524; }
 
-        /* Price row  */
         .price-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 12px;
         }
 
-        /* Marker selector  */
-        .marker-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 6px;
-        }
-
-        .marker-btn {
-            padding: 10px;
-            background: rgba(255,255,255,0.04);
-            border: 2px solid rgba(255,255,255,0.10);
-            border-radius: 8px;
-            color: rgba(255,255,255,0.6);
-            font-family: 'Press Start 2P', monospace;
-            font-size: 9px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .marker-btn:hover {
-            border-color: #00ff88;
-            color: #00ff88;
-        }
-
-        .marker-btn.selected {
-            background: rgba(0,255,136,0.15);
-            border-color: #00ff88;
-            color: #00ff88;
-        }
-
-        /* Buttons  */
         .btn-submit {
             width: 100%;
             padding: 14px;
@@ -167,7 +118,6 @@
             color: #0a0e1a;
             border: none;
             border-radius: 10px;
-            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             margin-top: 8px;
@@ -179,7 +129,6 @@
         .btn-submit:hover { opacity: 0.85; }
         .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /*  Toast notification  */
         .toast {
             position: fixed;
             bottom: 24px;
@@ -196,16 +145,9 @@
             white-space: nowrap;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: #ff6b6b; color: white; }
 
-        .toast.error {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        /*  Offer list  */
         .offer-list {
             display: flex;
             flex-direction: column;
@@ -225,9 +167,7 @@
             gap: 12px;
         }
 
-        .offer-item.expired {
-            opacity: 0.4;
-        }
+        .offer-item.expired { opacity: 0.4; }
 
         .offer-info h3 {
             font-size: 14px;
@@ -249,45 +189,24 @@
             font-weight: 600;
         }
 
-        .tag-category {
-            background: rgba(67,97,238,0.2);
-            color: #7b9ff9;
-        }
-
+        .tag-category { background: rgba(67,97,238,0.2); color: #7b9ff9; }
         .tag-marker {
             background: rgba(0,255,136,0.15);
             color: #00ff88;
             font-family: 'Press Start 2P', monospace;
             font-size: 8px;
         }
+        .tag-expired { background: rgba(255,107,107,0.2); color: #ff6b6b; }
 
-        .tag-expired {
-            background: rgba(255,107,107,0.2);
-            color: #ff6b6b;
-        }
+        .offer-price { text-align: right; flex-shrink: 0; }
 
-        .offer-price {
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .price-now {
-            font-size: 18px;
-            font-weight: 700;
-            color: #00ff88;
-        }
-
+        .price-now { font-size: 18px; font-weight: 700; color: #00ff88; }
         .price-was {
             font-size: 11px;
             color: rgba(255,255,255,0.4);
             text-decoration: line-through;
         }
-
-        .price-discount {
-            font-size: 11px;
-            color: #ff6b6b;
-            font-weight: 700;
-        }
+        .price-discount { font-size: 11px; color: #ff6b6b; font-weight: 700; }
 
         .btn-delete {
             background: rgba(255,107,107,0.15);
@@ -301,9 +220,7 @@
             transition: background 0.2s;
         }
 
-        .btn-delete:hover {
-            background: rgba(255,107,107,0.3);
-        }
+        .btn-delete:hover { background: rgba(255,107,107,0.3); }
 
         .btn-edit {
             background: rgba(0,255,136,0.10);
@@ -317,9 +234,7 @@
             transition: background 0.2s;
         }
 
-        .btn-edit:hover {
-            background: rgba(0,255,136,0.25);
-        }
+        .btn-edit:hover { background: rgba(0,255,136,0.25); }
 
         .empty-state {
             text-align: center;
@@ -328,12 +243,8 @@
             font-size: 13px;
         }
 
-        .empty-state .icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
 
-        /* ── Category filter ── */
         .filter-row {
             display: flex;
             gap: 8px;
@@ -359,7 +270,6 @@
             font-weight: 700;
         }
 
-        /* ── Stats bar ── */
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -376,11 +286,7 @@
             text-align: center;
         }
 
-        .stat-number {
-            font-size: 28px;
-            font-weight: 700;
-            color: #00ff88;
-        }
+        .stat-number { font-size: 28px; font-weight: 700; color: #00ff88; }
 
         .stat-label {
             font-size: 11px;
@@ -393,8 +299,8 @@
         @media (max-width: 600px) {
             .stats-bar { grid-template-columns: 1fr 1fr; }
             .price-row { grid-template-columns: 1fr 1fr; }
-            .marker-grid { grid-template-columns: repeat(4, 1fr); }
-        }/* ── Store map ── */
+        }
+
         .store-map {
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.08);
@@ -402,6 +308,7 @@
             padding: 14px;
             margin-top: 8px;
         }
+
         .store-title {
             font-size: 10px;
             font-weight: 700;
@@ -411,6 +318,7 @@
             text-align: center;
             margin-bottom: 10px;
         }
+
         .aisle-label {
             font-size: 10px;
             color: rgba(255,255,255,0.25);
@@ -418,11 +326,13 @@
             padding-left: 6px;
             border-left: 2px solid rgba(255,255,255,0.08);
         }
+
         .aisle-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 6px;
         }
+
         .shelf {
             background: rgba(255,255,255,0.04);
             border: 2px solid rgba(255,255,255,0.08);
@@ -438,40 +348,43 @@
             justify-content: center;
             gap: 3px;
         }
+
         .shelf:hover {
             border-color: rgba(0,255,136,0.4);
             background: rgba(0,255,136,0.05);
         }
+
         .shelf.selected {
             border-color: #00ff88;
             background: rgba(0,255,136,0.10);
         }
+
         .shelf.has-offer {
             border-color: #D4A017;
             background: rgba(212,160,23,0.07);
         }
+
         .shelf.selected.has-offer {
             border-color: #00ff88;
             background: rgba(0,255,136,0.12);
         }
+
         .shelf-empty {
             opacity: 0.2;
             cursor: default;
             pointer-events: none;
         }
+
         .shelf-code {
             font-family: 'Press Start 2P', monospace;
             font-size: 7px;
             color: rgba(255,255,255,0.25);
         }
+
         .shelf.selected .shelf-code { color: #00ff88; }
         .shelf.has-offer .shelf-code { color: #D4A017; }
+        .shelf-name { font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.4; }
 
-        .shelf-name {
-            font-size: 10px;
-            color: rgba(255,255,255,0.5);
-            line-height: 1.4;
-        }
         .shelf-offer-tag {
             font-size: 8px;
             color: #D4A017;
@@ -481,12 +394,14 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .store-bottom {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             margin-top: 10px;
         }
+
         .checkout {
             background: rgba(67,97,238,0.12);
             border: 1px solid rgba(67,97,238,0.25);
@@ -497,6 +412,7 @@
             color: #7b9ff9;
             font-weight: 600;
         }
+
         .entrance {
             background: rgba(0,255,136,0.06);
             border: 1px dashed rgba(0,255,136,0.25);
@@ -536,32 +452,36 @@
 </div>
 
 <div class="layout">
-    <div class="form-group">
-        <label>Dashboard Key</label>
-        <div style="display:flex;gap:8px;">
-            <input type="password" id="dashKey"
-                   placeholder="Enter dashboard key"/>
-            <button onclick="saveKey()"
-                    style="padding:12px 16px;
-                       background:#00ff88;
-                       color:#0a0e1a;
-                       border:none;
-                       border-radius:10px;
-                       font-weight:700;
-                       cursor:pointer;
-                       white-space:nowrap;
-                       font-size:12px;">
-                Remember
-            </button>
-        </div>
-    </div>
+
     <!-- Left — Add offer form -->
     <div class="card">
         <h2>➕ Add New Offer</h2>
 
+        <!-- Dashboard Key -->
+        <div class="form-group">
+            <label>Dashboard Key</label>
+            <div style="display:flex;gap:8px;">
+                <input type="password" id="dashKey"
+                       placeholder="Enter dashboard key"/>
+                <button onclick="saveKey()"
+                        style="padding:12px 16px;
+                               background:#00ff88;
+                               color:#0a0e1a;
+                               border:none;
+                               border-radius:10px;
+                               font-weight:700;
+                               cursor:pointer;
+                               white-space:nowrap;
+                               font-size:12px;">
+                    Remember
+                </button>
+            </div>
+        </div>
+
         <div class="form-group">
             <label>Product Name</label>
-            <input type="text" id="product" placeholder="e.g. Pasta Barilla 500g"/>
+            <input type="text" id="product"
+                   placeholder="e.g. Pasta Barilla 500g"/>
         </div>
 
         <div class="form-group">
@@ -579,9 +499,12 @@
         <div class="form-group">
             <label>Prices &amp; Discount</label>
             <div class="price-row">
-                <input type="number" id="original" placeholder="Was €" step="0.01" min="0"/>
-                <input type="number" id="price"    placeholder="Now €" step="0.01" min="0"/>
-                <input type="text"   id="discount" placeholder="e.g. 30%"/>
+                <input type="number" id="original"
+                       placeholder="Was €" step="0.01" min="0"/>
+                <input type="number" id="price"
+                       placeholder="Now €" step="0.01" min="0"/>
+                <input type="text" id="discount"
+                       placeholder="e.g. 30%"/>
             </div>
         </div>
 
@@ -593,21 +516,24 @@
         <div class="form-group">
             <label>Shelf Location — click to select</label>
             <div class="store-map">
-                <div class="store-title"> Store Floor Plan</div>
+                <div class="store-title">Store Floor Plan</div>
 
                 <div class="aisle-label">Aisle 1 — Food &amp; Pasta</div>
                 <div class="aisle-row">
-                    <div class="shelf" id="shelf-M001" onclick="selectMarker('M001')">
+                    <div class="shelf" id="shelf-M001"
+                         onclick="selectMarker('M001')">
                         <span class="shelf-code">M001</span>
                         <span class="shelf-name">Pasta<br>Rice</span>
                         <span class="shelf-offer-tag" id="tag-M001"></span>
                     </div>
-                    <div class="shelf" id="shelf-M002" onclick="selectMarker('M002')">
+                    <div class="shelf" id="shelf-M002"
+                         onclick="selectMarker('M002')">
                         <span class="shelf-code">M002</span>
                         <span class="shelf-name">Tuna<br>Oil</span>
                         <span class="shelf-offer-tag" id="tag-M002"></span>
                     </div>
-                    <div class="shelf" id="shelf-M003" onclick="selectMarker('M003')">
+                    <div class="shelf" id="shelf-M003"
+                         onclick="selectMarker('M003')">
                         <span class="shelf-code">M003</span>
                         <span class="shelf-name">Tomatoes<br>Sauces</span>
                         <span class="shelf-offer-tag" id="tag-M003"></span>
@@ -616,17 +542,20 @@
 
                 <div class="aisle-label">Aisle 2 — Drinks &amp; Fresh</div>
                 <div class="aisle-row">
-                    <div class="shelf" id="shelf-M004" onclick="selectMarker('M004')">
+                    <div class="shelf" id="shelf-M004"
+                         onclick="selectMarker('M004')">
                         <span class="shelf-code">M004</span>
                         <span class="shelf-name">Water<br>Juice</span>
                         <span class="shelf-offer-tag" id="tag-M004"></span>
                     </div>
-                    <div class="shelf" id="shelf-M005" onclick="selectMarker('M005')">
+                    <div class="shelf" id="shelf-M005"
+                         onclick="selectMarker('M005')">
                         <span class="shelf-code">M005</span>
                         <span class="shelf-name">Beer<br>Wine</span>
                         <span class="shelf-offer-tag" id="tag-M005"></span>
                     </div>
-                    <div class="shelf" id="shelf-M006" onclick="selectMarker('M006')">
+                    <div class="shelf" id="shelf-M006"
+                         onclick="selectMarker('M006')">
                         <span class="shelf-code">M006</span>
                         <span class="shelf-name">Salad<br>Fruit</span>
                         <span class="shelf-offer-tag" id="tag-M006"></span>
@@ -635,24 +564,27 @@
 
                 <div class="aisle-label">Aisle 3 — Home &amp; Hardware</div>
                 <div class="aisle-row">
-                    <div class="shelf" id="shelf-M007" onclick="selectMarker('M007')">
+                    <div class="shelf" id="shelf-M007"
+                         onclick="selectMarker('M007')">
                         <span class="shelf-code">M007</span>
                         <span class="shelf-name">Cleaning<br>Home</span>
                         <span class="shelf-offer-tag" id="tag-M007"></span>
                     </div>
-                    <div class="shelf" id="shelf-M008" onclick="selectMarker('M008')">
+                    <div class="shelf" id="shelf-M008"
+                         onclick="selectMarker('M008')">
                         <span class="shelf-code">M008</span>
                         <span class="shelf-name">Tools<br>Hardware</span>
                         <span class="shelf-offer-tag" id="tag-M008"></span>
                     </div>
                     <div class="shelf shelf-empty">
-                        <span class="shelf-name" style="color:rgba(255,255,255,0.15)">—</span>
+                        <span class="shelf-name"
+                              style="color:rgba(255,255,255,0.15)">—</span>
                     </div>
                 </div>
 
                 <div class="store-bottom">
                     <div class="checkout">Checkout</div>
-                    <div class="entrance"> Entrance</div>
+                    <div class="entrance">Entrance</div>
                 </div>
             </div>
             <input type="hidden" id="markerId"/>
@@ -667,12 +599,18 @@
     <div class="card">
         <h2>Current Offers</h2>
         <div class="filter-row">
-            <button class="filter-btn active" onclick="filterOffers('all', this)">All</button>
-            <button class="filter-btn" onclick="filterOffers('food', this)">🍝 Food</button>
-            <button class="filter-btn" onclick="filterOffers('drinks', this)">🥤 Drinks</button>
-            <button class="filter-btn" onclick="filterOffers('home', this)">🏠 Home</button>
-            <button class="filter-btn" onclick="filterOffers('hardware', this)">🔧 Hardware</button>
-            <button class="filter-btn" onclick="filterOffers('fresh', this)">🥦 Fresh</button>
+            <button class="filter-btn active"
+                    onclick="filterOffers('all', this)">All</button>
+            <button class="filter-btn"
+                    onclick="filterOffers('food', this)">🍝 Food</button>
+            <button class="filter-btn"
+                    onclick="filterOffers('drinks', this)">🥤 Drinks</button>
+            <button class="filter-btn"
+                    onclick="filterOffers('home', this)">🏠 Home</button>
+            <button class="filter-btn"
+                    onclick="filterOffers('hardware', this)">🔧 Hardware</button>
+            <button class="filter-btn"
+                    onclick="filterOffers('fresh', this)">🥦 Fresh</button>
         </div>
         <div class="offer-list" id="offer-list">
             <div class="empty-state">
