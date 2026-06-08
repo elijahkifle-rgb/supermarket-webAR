@@ -112,7 +112,6 @@ async function editOffer(markerId) {
 }
 
 async function deleteOffer(markerId) {
-async function deleteOffer(markerId) {
     if (!confirm(`Remove offer for ${markerId}?`)) return
     try {
         await fetch(`${W}/api/offers/${markerId}`, {
@@ -241,4 +240,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     load()
 })
-}
+
