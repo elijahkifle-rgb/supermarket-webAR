@@ -2,32 +2,73 @@
 // SupermarketAR — Cloudflare Worker
 // Author: Elias Kifle Tsina
 
+// Constants
+const KEY_PREFIX      = 'offer:'
+const RL_PREFIX       = 'rl:'
+const RATE_LIMIT      = 500   // requests per IP per 60-second window
+const RATE_WINDOW_S   = 60
+const VALID_CATEGORIES = ['food', 'drinks', 'fresh', 'home', 'hardware']
+
 let requestCount = 0
 
-const rateLimitMap = new Map()
-
-function isRateLimited(ip) {
-	const now         = Date.now()
-	const windowMs    = 60 * 1000
-	const maxRequests = 500
-	if (!rateLimitMap.has(ip)) {
-		rateLimitMap.set(ip, { count: 1, start: now })
-		return false
-	}
-	const record = rateLimitMap.get(ip)
-	if (now - record.start > windowMs) {
-		rateLimitMap.set(ip, { count: 1, start: now })
-		return false
-	}
-	record.count++
-	return record.count > maxRequests
+//  KV-based distributed rate limiting
+// Cloudflare KV with a TTL so the counter is consistent across edge nodes
+// and automatically expires after the rate window.
+async function isRateLimited(env, ip) {
+	const key   = RL_PREFIX + ip
+	const raw   = await env.OFFERS_KV.get(key)
+	const count = raw ? parseInt(raw, 10) : 0
+	if (count >= RATE_LIMIT) return true
+	await env.OFFERS_KV.put(key, String(count + 1), {
+		expirationTtl: RATE_WINDOW_S
+	})
+	return false
 }
 
+// Offer field validation
+
+function validateOffer(body) {
+	const errors = []
+	if (!body.markerId || typeof body.markerId !== 'string')
+		errors.push('markerId')
+	if (!body.product || typeof body.product !== 'string' || !body.product.trim())
+		errors.push('product')
+	if (!VALID_CATEGORIES.includes((body.category || '').toLowerCase()))
+		errors.push('category — must be one of: ' + VALID_CATEGORIES.join(', '))
+	const price = parseFloat(body.price)
+	if (isNaN(price) || price < 0)
+		errors.push('price — must be a non-negative number')
+	if (body.original !== undefined && body.original !== null) {
+		const original = parseFloat(body.original)
+		if (isNaN(original) || original <= 0)
+			errors.push('original — must be a positive number when provided')
+	}
+	return errors
+}
+
+//  Paginated KV list ─
+// KV list returns a maximum of 1000 keys per page. Without pagination, any
+// store with more than 1000 offers would silently drop entries.
+async function listAllOffers(env) {
+	const offers = []
+	let cursor
+	do {
+		const page = await env.OFFERS_KV.list({
+			prefix: KEY_PREFIX,
+			cursor
+		})
+		const values = await Promise.all(
+			page.keys.map(k => env.OFFERS_KV.get(k.name, { type: 'json' }))
+		)
+		values.forEach(o => { if (o) offers.push(o) })
+		cursor = page.list_complete ? undefined : page.cursor
+	} while (cursor)
+	return offers
+}
+
+//  Main fetch handler 
 export default {
 	async fetch(request, env, ctx) {
-
-		const allowedOrigins = (env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim())
-		const requestOrigin  = request.headers.get('Origin') || ''
 
 		const corsHeaders = {
 			'Access-Control-Allow-Origin':  '*',
@@ -36,11 +77,11 @@ export default {
 		}
 
 		if (request.method === 'OPTIONS') {
-			return new Response(null, { headers: corsHeaders })
+			return new Response(null, { status: 204, headers: corsHeaders })
 		}
 
 		const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown'
-		if (isRateLimited(clientIP)) {
+		if (await isRateLimited(env, clientIP)) {
 			return new Response(JSON.stringify({ error: 'Too many requests' }), {
 				status: 429,
 				headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -62,6 +103,7 @@ export default {
 	}
 }
 
+// ── Offer handler ─────────────────────────────────────────────────────────
 async function handleOffers(request, url, env, corsHeaders) {
 	const t0        = Date.now()
 	const pathParts = url.pathname.split('/').filter(Boolean)
@@ -69,7 +111,7 @@ async function handleOffers(request, url, env, corsHeaders) {
 	const category  = url.searchParams.get('category')
 	const cloudOnly = url.searchParams.get('cloudonly') === 'true'
 
-	//  GET /api/offers/:markerId
+	// GET /api/offers/:markerId
 	if (request.method === 'GET' && markerId) {
 
 		if (cloudOnly) {
@@ -81,7 +123,6 @@ async function handleOffers(request, url, env, corsHeaders) {
 			const offers  = data.record || []
 			const offer   = offers.find(o => o.markerId === markerId)
 			const totalMs = Date.now() - t0
-
 			return new Response(JSON.stringify(offer || null), {
 				status: offer ? 200 : 404,
 				headers: {
@@ -94,19 +135,14 @@ async function handleOffers(request, url, env, corsHeaders) {
 		}
 
 		const kvStart = Date.now()
-		const offer   = await env.OFFERS_KV.get(
-			`offer:${markerId}`, { type: 'json' }
-		)
+		const offer   = await env.OFFERS_KV.get(`offer:${markerId}`, { type: 'json' })
 		const kvMs    = Date.now() - kvStart
 		const totalMs = Date.now() - t0
 
 		if (!offer) {
 			return new Response(
 				JSON.stringify({ error: 'No offer for this marker' }),
-				{
-					status: 404,
-					headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-				}
+				{ status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
 			)
 		}
 
@@ -136,7 +172,6 @@ async function handleOffers(request, url, env, corsHeaders) {
 				? offers.filter(o => o.category === category)
 				: offers
 			const totalMs  = Date.now() - t0
-
 			return new Response(JSON.stringify(filtered), {
 				headers: {
 					...corsHeaders,
@@ -147,20 +182,21 @@ async function handleOffers(request, url, env, corsHeaders) {
 			})
 		}
 
-		const list   = await env.OFFERS_KV.list({ prefix: 'offer:' })
-		const offers = await Promise.all(
-			list.keys.map(k => env.OFFERS_KV.get(k.name, { type: 'json' }))
-		)
+		// FIX 3: use paginated list instead of single-page list
+		const kvStart = Date.now()
+		const offers  = await listAllOffers(env)
+		const kvMs    = Date.now() - kvStart
+
 		const active = offers.filter(o => {
 			if (!o) return false
 			if (!o.active) return false
-			if (o.validUntil && new Date(o.validUntil) < new Date()) return false
+			if (o.validUntil && new Date(o.validUntil + 'T23:59:59') < new Date()) return false
 			return true
 		})
 		const filtered = category
 			? active.filter(o => o.category === category)
 			: active
-		const totalMs  = Date.now() - t0
+		const totalMs = Date.now() - t0
 
 		return new Response(JSON.stringify(filtered), {
 			status: 200,
@@ -168,12 +204,13 @@ async function handleOffers(request, url, env, corsHeaders) {
 				...corsHeaders,
 				'Content-Type':    'application/json',
 				'X-Config':        'cloud-edge',
+				'X-KV-Latency':    String(kvMs),
 				'X-Total-Latency': String(totalMs)
 			}
 		})
 	}
 
-	//  POST
+	// POST
 	if (request.method === 'POST') {
 		const dashKey = request.headers.get('X-Dashboard-Key')
 		if (dashKey !== env.DASHBOARD_KEY) {
@@ -182,16 +219,19 @@ async function handleOffers(request, url, env, corsHeaders) {
 				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
 			})
 		}
+
 		const body = await request.json()
-		if (!body.markerId || !body.product || !body.category || !body.price) {
-			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-				status: 400,
-				headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-			})
+
+		// FIX 2: validate all fields before writing to KV
+		const errors = validateOffer(body)
+		if (errors.length > 0) {
+			return new Response(
+				JSON.stringify({ error: 'Validation failed', fields: errors }),
+				{ status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+			)
 		}
 
-
-		//  Auto-compute discount if not provided
+		// Auto-compute discount if not provided
 		const wasPrice = parseFloat(body.original) || 0
 		const nowPrice = parseFloat(body.price)    || 0
 		let discount   = body.discount || null
@@ -201,9 +241,9 @@ async function handleOffers(request, url, env, corsHeaders) {
 
 		const offer = {
 			markerId:   body.markerId,
-			product:    body.product,
-			category:   body.category,
-			original:   body.original   ? parseFloat(body.original) : null,
+			product:    body.product.trim(),
+			category:   body.category.toLowerCase(),
+			original:   body.original ? parseFloat(body.original) : null,
 			price:      parseFloat(body.price),
 			discount:   discount,
 			validUntil: body.validUntil || null,
@@ -212,10 +252,7 @@ async function handleOffers(request, url, env, corsHeaders) {
 			createdAt:  Date.now()
 		}
 
-		await env.OFFERS_KV.put(
-			`offer:${offer.markerId}`,
-			JSON.stringify(offer)
-		)
+		await env.OFFERS_KV.put(`offer:${offer.markerId}`, JSON.stringify(offer))
 		return new Response(JSON.stringify({ success: true, offer }), {
 			status: 201,
 			headers: { ...corsHeaders, 'Content-Type': 'application/json' }
