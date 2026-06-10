@@ -247,7 +247,7 @@
 <a-scene
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; matrixCodeType: 3x3;"
-        renderer="logarithmicDepthBuffer: true;  colorManagement: false;"
+        renderer="logarithmicDepthBuffer: true; colorManagement: false;"
         vr-mode-ui="enabled: false">
     <a-light type="ambient" color="#ffffff" intensity="1.5"/>
 
@@ -272,7 +272,6 @@
                    loop: true;
                    dir: alternate">
 
-            <!-- Background plane -->
             <a-plane
                     position="0 0 0"
                     rotation="-90 0 0"
@@ -280,7 +279,6 @@
                     material="shader: flat; color: #0a0e1a; opacity: 1; depthWrite: false; side: double">
             </a-plane>
 
-            <!-- Red top border -->
             <a-plane
                     position="0 0.004 -0.65"
                     rotation="-90 0 0"
@@ -288,7 +286,6 @@
                     material="shader: flat; color: #ff6b6b; emissive: #ff6b6b; emissiveIntensity: 3.0; depthWrite: false">
             </a-plane>
 
-            <!-- OPERATOR MODE -->
             <a-text
                     value="[ OPERATOR MODE ]"
                     position="0 0.01 -0.42"
@@ -299,7 +296,6 @@
                     material="depthTest: false">
             </a-text>
 
-            <!-- Shelf ID -->
             <a-text
                     id="ar-shelf"
                     value=""
@@ -311,7 +307,6 @@
                     material="depthTest: false">
             </a-text>
 
-            <!-- Divider -->
             <a-plane
                     position="0 0.002 0.02"
                     rotation="-90 0 0"
@@ -319,7 +314,6 @@
                     material="shader: flat; color: #ff6b6b; opacity: 0.3; depthWrite: false">
             </a-plane>
 
-            <!-- Instruction -->
             <a-text
                     id="ar-instruction"
                     value="POINT AT SHELF — FILL FORM"
@@ -331,7 +325,6 @@
                     material="depthTest: false">
             </a-text>
 
-            <!-- Product saved confirmation -->
             <a-text
                     id="ar-product"
                     value=""
@@ -343,7 +336,6 @@
                     material="depthTest: false">
             </a-text>
 
-            <!-- Product image — renders last  -->
             <a-entity
                     id="op-image-wrapper"
                     position="0.45 0.02 0.15"
@@ -385,6 +377,29 @@
 <div id="operator-form">
     <div class="handle"></div>
     <h2>➕ ADD OFFER</h2>
+
+    <!--  Dashboard Key field -->
+    <div class="op-field">
+        <label class="op-label">Dashboard Key</label>
+        <div style="display:flex;gap:8px;">
+            <input class="op-input" id="op-key"
+                   type="password"
+                   placeholder="Enter dashboard key"/>
+            <button onclick="saveKey()"
+                    style="padding:10px 14px;
+                           background:#ff6b6b;
+                           color:white;
+                           border:none;
+                           border-radius:10px;
+                           font-weight:700;
+                           cursor:pointer;
+                           white-space:nowrap;
+                           font-size:11px;">
+                Remember
+            </button>
+        </div>
+    </div>
+
     <div id="op-marker-label">Shelf: —</div>
 
     <div class="op-field">
@@ -416,7 +431,7 @@
                    type="number" placeholder="Now €"
                    step="0.01" min="0"/>
             <input class="op-input" id="op-discount"
-                   type="text" placeholder="e.g. 30%"/>
+                   type="text" placeholder="auto"/>
         </div>
     </div>
 
@@ -439,7 +454,22 @@
 
     const WORKER_URL = import.meta.env.VITE_WORKER_URL ||
         'https://supermarket-ar-worker.webar-football.workers.dev'
-    const KEY = 'supermarket2026'
+
+    // ── Key management
+    const KEY_STORAGE = 'supermarketar.dashboardKey'
+
+    function getKey() {
+        return localStorage.getItem(KEY_STORAGE) ||
+            document.getElementById('op-key')?.value ||
+            ''
+    }
+
+    window.saveKey = function() {
+        const key = document.getElementById('op-key').value.trim()
+        if (!key) return toast('Enter a key first', false)
+        localStorage.setItem(KEY_STORAGE, key)
+        toast('Key saved! ✅', true)
+    }
 
     const PRODUCT_IMAGES = {
         'heineken':  '/images/heineken2.png',
@@ -457,6 +487,7 @@
         'rice':      '/images/rice.png',
         'tuna':      '/images/tuna.png',
     }
+
     function getProductImage(productName) {
         const name = productName.toLowerCase()
         const match = Object.keys(PRODUCT_IMAGES).find(key =>
@@ -472,9 +503,13 @@
     d.setDate(d.getDate() + 7)
     document.getElementById('op-validUntil').value =
         d.toISOString().split('T')[0]
+
+    // ── Load saved key
+    const saved = localStorage.getItem(KEY_STORAGE)
+    if (saved) document.getElementById('op-key').value = saved
+
     document.getElementById('loading').style.display = 'none'
 
-    // ── Reset image helper
     function resetImage() {
         const wrapEl = document.getElementById('op-image-wrapper')
         if (wrapEl) {
@@ -486,29 +521,29 @@
         }
     }
 
-    // ── Show form when marker detected
     function showForm(markerId) {
         detectedMarkerId = markerId
-        document.getElementById('op-marker-label').textContent = `Shelf: ${markerId}`
+        document.getElementById('op-marker-label').textContent =
+            `Shelf: ${markerId}`
         document.getElementById('op-product').value   = ''
         document.getElementById('op-category').value  = ''
         document.getElementById('op-original').value  = ''
         document.getElementById('op-price').value     = ''
         document.getElementById('op-discount').value  = ''
-        document.getElementById('ar-shelf').setAttribute('value', `Shelf: ${markerId}`)
+        document.getElementById('ar-shelf').setAttribute('value',
+            `Shelf: ${markerId}`)
         document.getElementById('ar-product').setAttribute('value', '')
-        document.getElementById('ar-instruction').setAttribute('value', 'FILL FORM BELOW')
+        document.getElementById('ar-instruction').setAttribute('value',
+            'FILL FORM BELOW')
         document.getElementById('operator-form').classList.add('show')
         document.getElementById('scan-hint').style.display = 'none'
         resetImage()
     }
 
-    //  Close form — image stays visible
     window.closeForm = function() {
         document.getElementById('operator-form').classList.remove('show')
     }
 
-    //  Toast
     function toast(msg, success = true) {
         const t = document.getElementById('op-toast')
         t.textContent = msg
@@ -516,7 +551,6 @@
         setTimeout(() => t.classList.remove('show'), 3000)
     }
 
-    // ── Save offer
     window.saveOffer = async function() {
         const product    = document.getElementById('op-product').value.trim()
         const category   = document.getElementById('op-category').value
@@ -525,9 +559,18 @@
         const discount   = document.getElementById('op-discount').value.trim()
         const validUntil = document.getElementById('op-validUntil').value
 
+        if (!getKey()) return toast('Enter dashboard key first', false)
         if (!product)  return toast('Enter product name', false)
         if (!category) return toast('Select a category', false)
         if (!price)    return toast('Enter offer price', false)
+
+        // ── Auto-compute discount if not provided
+        const wasVal = parseFloat(original)
+        const nowVal = parseFloat(price)
+        let discountVal = discount
+        if (!discountVal && wasVal > 0 && nowVal >= 0) {
+            discountVal = Math.round((1 - nowVal / wasVal) * 100) + '%'
+        }
 
         const btn = document.getElementById('op-save-btn')
         btn.disabled    = true
@@ -538,7 +581,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type':    'application/json',
-                    'X-Dashboard-Key': KEY
+                    'X-Dashboard-Key': getKey()
                 },
                 body: JSON.stringify({
                     markerId:   detectedMarkerId,
@@ -546,16 +589,19 @@
                     category,
                     original:   original   ? parseFloat(original) : null,
                     price:      parseFloat(price),
-                    discount:   discount   || null,
-                    validUntil: validUntil || null,
+                    discount:   discountVal || null,
+                    validUntil: validUntil  || null,
                     active:     true
                 })
             })
 
             if (!r.ok) throw new Error('Failed')
 
-            // ── Show success on AR plane
-            toast('Offer saved!', true)
+            // ── Save key to localStorage after successful save
+            localStorage.setItem(KEY_STORAGE,
+                document.getElementById('op-key').value)
+
+            toast('Offer saved! ✅', true)
             document.getElementById('ar-product').setAttribute('value',
                 '✓ ' + product.toUpperCase())
             document.getElementById('ar-shelf').setAttribute('value',
@@ -563,7 +609,6 @@
             document.getElementById('ar-instruction').setAttribute('value',
                 'OFFER SAVED SUCCESSFULLY')
 
-            // ── Show product image pop-out
             const imageUrl = getProductImage(product)
             const wrapEl   = document.getElementById('op-image-wrapper')
             const imgEl    = document.getElementById('op-product-image')
@@ -594,7 +639,6 @@
                 }, 200)
             }
 
-            // ── Close form after 2s — image stays on plane
             setTimeout(() => {
                 document.getElementById('operator-form').classList.remove('show')
             }, 2000)
@@ -607,7 +651,6 @@
         }
     }
 
-    // ── Marker tracking
     initMarkerTracking(
         () => {
             const params   = new URLSearchParams(window.location.search)
@@ -623,7 +666,6 @@
         }
     )
 
-    // bounce animation
     const scene = document.querySelector('a-scene')
     if (scene) {
         scene.addEventListener('loaded', () => {
