@@ -2,30 +2,20 @@
 // SupermarketAR — Cloudflare Worker
 // Author: Elias Kifle Tsina
 
-// Constants
-const KEY_PREFIX      = 'offer:'
-const RL_PREFIX       = 'rl:'
-const RATE_LIMIT      = 500   // requests per IP per 60-second window
-const RATE_WINDOW_S   = 60
+const KEY_PREFIX       = 'offer:'
+const RL_PREFIX        = 'rl:'
+const RATE_LIMIT       = 500
+const RATE_WINDOW_S    = 60
 const VALID_CATEGORIES = ['food', 'drinks', 'fresh', 'home', 'hardware']
 
-let requestCount = 0
-
-//  KV-based distributed rate limiting
-// Cloudflare KV with a TTL so the counter is consistent across edge nodes
-// and automatically expires after the rate window.
 async function isRateLimited(env, ip) {
 	const key   = RL_PREFIX + ip
 	const raw   = await env.OFFERS_KV.get(key)
 	const count = raw ? parseInt(raw, 10) : 0
 	if (count >= RATE_LIMIT) return true
-	await env.OFFERS_KV.put(key, String(count + 1), {
-		expirationTtl: RATE_WINDOW_S
-	})
+	await env.OFFERS_KV.put(key, String(count + 1), { expirationTtl: RATE_WINDOW_S })
 	return false
 }
-
-// Offer field validation
 
 function validateOffer(body) {
 	const errors = []
@@ -46,17 +36,11 @@ function validateOffer(body) {
 	return errors
 }
 
-//  Paginated KV list ─
-// KV list returns a maximum of 1000 keys per page. Without pagination, any
-// store with more than 1000 offers would silently drop entries.
 async function listAllOffers(env) {
 	const offers = []
 	let cursor
 	do {
-		const page = await env.OFFERS_KV.list({
-			prefix: KEY_PREFIX,
-			cursor
-		})
+		const page = await env.OFFERS_KV.list({ prefix: KEY_PREFIX, cursor })
 		const values = await Promise.all(
 			page.keys.map(k => env.OFFERS_KV.get(k.name, { type: 'json' }))
 		)
@@ -66,9 +50,8 @@ async function listAllOffers(env) {
 	return offers
 }
 
-//  Main fetch handler 
 export default {
-	async fetch(request, env, ctx) {
+	async fetch(request, env) {
 
 		const corsHeaders = {
 			'Access-Control-Allow-Origin':  '*',
@@ -88,9 +71,7 @@ export default {
 			})
 		}
 
-		requestCount++
 		const url = new URL(request.url)
-		console.log(`[REQUEST] #${requestCount} ${request.method} ${url.pathname}`)
 
 		if (url.pathname.startsWith('/api/offers')) {
 			return handleOffers(request, url, env, corsHeaders)
@@ -103,12 +84,10 @@ export default {
 	}
 }
 
-// ── Offer handler ─────────────────────────────────────────────────────────
 async function handleOffers(request, url, env, corsHeaders) {
 	const t0        = Date.now()
 	const pathParts = url.pathname.split('/').filter(Boolean)
 	const markerId  = pathParts[2] || null
-	const category  = url.searchParams.get('category')
 	const cloudOnly = url.searchParams.get('cloudonly') === 'true'
 
 	// GET /api/offers/:markerId
@@ -161,6 +140,8 @@ async function handleOffers(request, url, env, corsHeaders) {
 	// GET /api/offers
 	if (request.method === 'GET') {
 
+		const category = url.searchParams.get('category')
+
 		if (cloudOnly) {
 			const r = await fetch(
 				`https://api.jsonbin.io/v3/b/${env.JSONBIN_BIN_ID}/latest`,
@@ -182,7 +163,6 @@ async function handleOffers(request, url, env, corsHeaders) {
 			})
 		}
 
-		// FIX 3: use paginated list instead of single-page list
 		const kvStart = Date.now()
 		const offers  = await listAllOffers(env)
 		const kvMs    = Date.now() - kvStart
@@ -210,7 +190,7 @@ async function handleOffers(request, url, env, corsHeaders) {
 		})
 	}
 
-	// POST
+	// POST /api/offers
 	if (request.method === 'POST') {
 		const dashKey = request.headers.get('X-Dashboard-Key')
 		if (dashKey !== env.DASHBOARD_KEY) {
@@ -220,9 +200,7 @@ async function handleOffers(request, url, env, corsHeaders) {
 			})
 		}
 
-		const body = await request.json()
-
-		// FIX 2: validate all fields before writing to KV
+		const body   = await request.json()
 		const errors = validateOffer(body)
 		if (errors.length > 0) {
 			return new Response(
@@ -231,7 +209,6 @@ async function handleOffers(request, url, env, corsHeaders) {
 			)
 		}
 
-		// Auto-compute discount if not provided
 		const wasPrice = parseFloat(body.original) || 0
 		const nowPrice = parseFloat(body.price)    || 0
 		let discount   = body.discount || null
@@ -239,17 +216,21 @@ async function handleOffers(request, url, env, corsHeaders) {
 			discount = Math.round((1 - nowPrice / wasPrice) * 100) + '%'
 		}
 
+		const existing = await env.OFFERS_KV.get(
+			`offer:${body.markerId}`, { type: 'json' }
+		)
+
 		const offer = {
 			markerId:   body.markerId,
 			product:    body.product.trim(),
 			category:   body.category.toLowerCase(),
-			original:   body.original ? parseFloat(body.original) : null,
+			original:   body.original   ? parseFloat(body.original) : null,
 			price:      parseFloat(body.price),
 			discount:   discount,
 			validUntil: body.validUntil || null,
 			active:     true,
 			updatedAt:  new Date().toISOString(),
-			createdAt:  Date.now()
+			createdAt:  existing?.createdAt || Date.now()
 		}
 
 		await env.OFFERS_KV.put(`offer:${offer.markerId}`, JSON.stringify(offer))
@@ -259,7 +240,7 @@ async function handleOffers(request, url, env, corsHeaders) {
 		})
 	}
 
-	// DELETE
+	// DELETE /api/offers/:markerId
 	if (request.method === 'DELETE' && markerId) {
 		const dashKey = request.headers.get('X-Dashboard-Key')
 		if (dashKey !== env.DASHBOARD_KEY) {
