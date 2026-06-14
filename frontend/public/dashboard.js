@@ -179,8 +179,8 @@ function render(cat) {
             : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-                <button class="btn-edit" onclick="editOffer('${o.markerId}')">✏️</button>
-                <button class="btn-delete" onclick="deleteOffer('${o.markerId}')">🗑</button>
+                <button class="btn-edit" onclick="editOffer('${o.markerId}')">edit</button>
+                <button class="btn-delete" onclick="deleteOffer('${o.markerId}')">delete</button>
             </div>
         </div>`
     }).join('')

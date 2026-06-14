@@ -25,8 +25,6 @@
             inset: 0 !important;
             z-index: 0 !important;
         }
-
-        /* ── Top bar ── */
         #top-bar {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -56,8 +54,6 @@
             border-radius: 20px;
             font-family: 'Press Start 2P', monospace;
         }
-
-        /* ── Scan hint ── */
         #scan-hint {
             position: fixed;
             top: 50%; left: 50%;
@@ -78,8 +74,6 @@
             color: rgba(255,255,255,0.5);
             font-size: 12px;
         }
-
-        /* ── Operator form ── */
         #operator-form {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -182,8 +176,6 @@
             cursor: pointer;
             font-family: inherit;
         }
-
-        /* ── Toast ── */
         #op-toast {
             position: fixed;
             bottom: 24px;
@@ -208,8 +200,6 @@
             background: #00ff88;
             color: #0a0e1a;
         }
-
-        /* ── Loading ── */
         #loading {
             position: fixed; inset: 0;
             background: #0a0e1a;
@@ -230,20 +220,17 @@
             color: rgba(255,255,255,0.6);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .a-enter-vr { display: none !important; }
         .a-enter-ar { display: none !important; }
     </style>
 </head>
 <body>
 
-<!-- Loading screen -->
 <div id="loading">
     <div class="spinner"></div>
     <p>LOADING...</p>
 </div>
 
-<!-- A-Frame AR scene -->
 <a-scene
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; matrixCodeType: 3x3;"
@@ -263,32 +250,28 @@
 
         <a-entity
                 id="op-group"
-                position="0 0.01 0"
-                animation__float="property: position;
-                   from: 0 0.005 0;
-                   to: 0 0.05 0;
-                   dur: 1200;
-                   easing: easeInOutSine;
-                   loop: true;
-                   dir: alternate">
+                position="0 0.01 0">
 
+            <!-- Background plane -->
             <a-plane
                     position="0 0 0"
                     rotation="-90 0 0"
-                    width="1.8" height="1.4"
+                    width="1.8" height="1.6"
                     material="shader: flat; color: #0a0e1a; opacity: 1; depthWrite: false; side: double">
             </a-plane>
 
+            <!-- Red top border -->
             <a-plane
-                    position="0 0.004 -0.65"
+                    position="0 0.004 -0.72"
                     rotation="-90 0 0"
                     width="1.8" height="0.06"
                     material="shader: flat; color: #ff6b6b; emissive: #ff6b6b; emissiveIntensity: 3.0; depthWrite: false">
             </a-plane>
 
+            <!-- OPERATOR MODE label -->
             <a-text
                     value="[ OPERATOR MODE ]"
-                    position="0 0.01 -0.42"
+                    position="0 0.01 -0.50"
                     rotation="-90 0 0"
                     color="#ff6b6b"
                     scale="0.14 0.14 0.14"
@@ -296,28 +279,31 @@
                     material="depthTest: false">
             </a-text>
 
+            <!-- Shelf + price -->
             <a-text
                     id="ar-shelf"
                     value=""
-                    position="0 0.01 -0.18"
+                    position="0 0.01 -0.26"
                     rotation="-90 0 0"
                     color="#ffffff"
-                    scale="0.26 0.26 0.26"
+                    scale="0.22 0.22 0.22"
                     align="center"
                     material="depthTest: false">
             </a-text>
 
+            <!-- Divider -->
             <a-plane
-                    position="0 0.002 0.02"
+                    position="0 0.002 -0.06"
                     rotation="-90 0 0"
                     width="1.5" height="0.01"
                     material="shader: flat; color: #ff6b6b; opacity: 0.3; depthWrite: false">
             </a-plane>
 
+            <!-- Was price — FIXED -->
             <a-text
-                    id="ar-instruction"
-                    value="POINT AT SHELF — FILL FORM"
-                    position="0 0.01 0.18"
+                    id="ar-original"
+                    value=""
+                    position="-0.3 0.01 0.10"
                     rotation="-90 0 0"
                     color="#888888"
                     scale="0.10 0.10 0.10"
@@ -325,10 +311,35 @@
                     material="depthTest: false">
             </a-text>
 
+            <!-- Discount — FIXED -->
+            <a-text
+                    id="ar-discount"
+                    value=""
+                    position="-0.3 0.01 0.26"
+                    rotation="-90 0 0"
+                    color="#ff6b6b"
+                    scale="0.13 0.13 0.13"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Instruction -->
+            <a-text
+                    id="ar-instruction"
+                    value="POINT AT SHELF — FILL FORM"
+                    position="0 0.01 0.42"
+                    rotation="-90 0 0"
+                    color="#888888"
+                    scale="0.10 0.10 0.10"
+                    align="center"
+                    material="depthTest: false">
+            </a-text>
+
+            <!-- Product confirmation -->
             <a-text
                     id="ar-product"
                     value=""
-                    position="-0.3 0.01 0.38"
+                    position="-0.3 0.01 0.58"
                     rotation="-90 0 0"
                     color="#00ff88"
                     scale="0.18 0.18 0.18"
@@ -336,6 +347,7 @@
                     material="depthTest: false">
             </a-text>
 
+            <!-- Product image pop-out -->
             <a-entity
                     id="op-image-wrapper"
                     position="0.45 0.02 0.15"
@@ -353,7 +365,6 @@
             </a-entity>
 
         </a-entity>
-
     </a-marker>
     <a-entity camera></a-entity>
 </a-scene>
@@ -378,7 +389,6 @@
     <div class="handle"></div>
     <h2>➕ ADD OFFER</h2>
 
-    <!--  Dashboard Key field -->
     <div class="op-field">
         <label class="op-label">Dashboard Key</label>
         <div style="display:flex;gap:8px;">
@@ -442,12 +452,13 @@
 
     <div class="op-btn-row">
         <button id="op-cancel-btn" onclick="closeForm()">Cancel</button>
-        <button id="op-save-btn" onclick="saveOffer()">SAVE OFFER</button>
+        <button id="op-save-btn" onclick="saveOffer()">💾 SAVE OFFER</button>
     </div>
 </div>
 
-<!-- Toast -->
 <div id="op-toast"></div>
+
+
 
 <script type="module">
     import { initMarkerTracking } from './arsession.js'
@@ -455,7 +466,6 @@
     const WORKER_URL = import.meta.env.VITE_WORKER_URL ||
         'https://supermarket-ar-worker.webar-football.workers.dev'
 
-    // ── Key management
     const KEY_STORAGE = 'supermarketar.dashboardKey'
 
     function getKey() {
@@ -498,19 +508,33 @@
 
     let detectedMarkerId = null
 
-    // ── Set default date to today + 7
     const d = new Date()
     d.setDate(d.getDate() + 7)
     document.getElementById('op-validUntil').value =
         d.toISOString().split('T')[0]
 
-    // ── Load saved key
+    // Load saved key
     const saved = localStorage.getItem(KEY_STORAGE)
     if (saved) document.getElementById('op-key').value = saved
 
     document.getElementById('loading').style.display = 'none'
 
-    function resetImage() {
+    function autoDiscount() {
+        const wasVal    = parseFloat(document.getElementById('op-original').value)
+        const nowVal    = parseFloat(document.getElementById('op-price').value)
+        const discField = document.getElementById('op-discount')
+        if (wasVal > 0 && nowVal >= 0 && !isNaN(wasVal) && !isNaN(nowVal)) {
+            discField.value = Math.round((1 - nowVal / wasVal) * 100) + '%'
+        } else {
+            discField.value = ''
+        }
+    }
+
+    document.getElementById('op-original').addEventListener('input', autoDiscount)
+    document.getElementById('op-price').addEventListener('input', autoDiscount)
+
+    // Reset AR plane
+    function resetARPlane() {
         const wrapEl = document.getElementById('op-image-wrapper')
         if (wrapEl) {
             wrapEl.setAttribute('visible', 'false')
@@ -519,25 +543,25 @@
             wrapEl.setAttribute('scale',    '0.1 0.1 0.1')
             wrapEl.setAttribute('position', '0.45 0.02 0.15')
         }
+        document.getElementById('ar-original').setAttribute('value', '')
+        document.getElementById('ar-discount').setAttribute('value', '')
+        document.getElementById('ar-product').setAttribute('value', '')
     }
 
+    // Show form
     function showForm(markerId) {
         detectedMarkerId = markerId
-        document.getElementById('op-marker-label').textContent =
-            `Shelf: ${markerId}`
+        document.getElementById('op-marker-label').textContent = `Shelf: ${markerId}`
         document.getElementById('op-product').value   = ''
         document.getElementById('op-category').value  = ''
         document.getElementById('op-original').value  = ''
         document.getElementById('op-price').value     = ''
         document.getElementById('op-discount').value  = ''
-        document.getElementById('ar-shelf').setAttribute('value',
-            `Shelf: ${markerId}`)
-        document.getElementById('ar-product').setAttribute('value', '')
-        document.getElementById('ar-instruction').setAttribute('value',
-            'FILL FORM BELOW')
+        document.getElementById('ar-shelf').setAttribute('value', `Shelf: ${markerId}`)
+        document.getElementById('ar-instruction').setAttribute('value', 'FILL FORM BELOW')
         document.getElementById('operator-form').classList.add('show')
         document.getElementById('scan-hint').style.display = 'none'
-        resetImage()
+        resetARPlane()
     }
 
     window.closeForm = function() {
@@ -551,12 +575,12 @@
         setTimeout(() => t.classList.remove('show'), 3000)
     }
 
+    //  Save offer
     window.saveOffer = async function() {
         const product    = document.getElementById('op-product').value.trim()
         const category   = document.getElementById('op-category').value
         const original   = document.getElementById('op-original').value
         const price      = document.getElementById('op-price').value
-        const discount   = document.getElementById('op-discount').value.trim()
         const validUntil = document.getElementById('op-validUntil').value
 
         if (!getKey()) return toast('Enter dashboard key first', false)
@@ -564,13 +588,10 @@
         if (!category) return toast('Select a category', false)
         if (!price)    return toast('Enter offer price', false)
 
-        // ── Auto-compute discount if not provided
-        const wasVal = parseFloat(original)
-        const nowVal = parseFloat(price)
-        let discountVal = discount
-        if (!discountVal && wasVal > 0 && nowVal >= 0) {
-            discountVal = Math.round((1 - nowVal / wasVal) * 100) + '%'
-        }
+        // Read discount directly from field — already computed by autoDiscount()
+        const discountVal = document.getElementById('op-discount').value.trim() || null
+        const wasVal      = parseFloat(original)
+        const nowVal      = parseFloat(price)
 
         const btn = document.getElementById('op-save-btn')
         btn.disabled    = true
@@ -589,7 +610,7 @@
                     category,
                     original:   original   ? parseFloat(original) : null,
                     price:      parseFloat(price),
-                    discount:   discountVal || null,
+                    discount:   discountVal,
                     validUntil: validUntil  || null,
                     active:     true
                 })
@@ -597,18 +618,32 @@
 
             if (!r.ok) throw new Error('Failed')
 
-            // ── Save key to localStorage after successful save
             localStorage.setItem(KEY_STORAGE,
                 document.getElementById('op-key').value)
 
             toast('Offer saved! ✅', true)
+
+            // Update AR plane
             document.getElementById('ar-product').setAttribute('value',
                 '✓ ' + product.toUpperCase())
             document.getElementById('ar-shelf').setAttribute('value',
-                `${detectedMarkerId} — EUR ${parseFloat(price).toFixed(2)}`)
+                `${detectedMarkerId} — EUR ${nowVal.toFixed(2)}`)
             document.getElementById('ar-instruction').setAttribute('value',
                 'OFFER SAVED SUCCESSFULLY')
 
+            // Show was price
+            if (wasVal > 0 && !isNaN(wasVal)) {
+                document.getElementById('ar-original').setAttribute('value',
+                    `WAS EUR ${wasVal.toFixed(2)}`)
+            }
+
+            // Show discount
+            if (discountVal) {
+                document.getElementById('ar-discount').setAttribute('value',
+                    `-${discountVal}`)
+            }
+
+            // Product image pop-out
             const imageUrl = getProductImage(product)
             const wrapEl   = document.getElementById('op-image-wrapper')
             const imgEl    = document.getElementById('op-product-image')

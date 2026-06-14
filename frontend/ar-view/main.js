@@ -58,9 +58,17 @@ async function loadOffers() {
         document.getElementById('loading').style.display = 'none'
     }, 3000)
     try {
-        const r   = await fetch(`${WORKER_URL}/api/offers`)
-        allOffers = await r.json()
-        console.log(`[SupermarketAR] ${allOffers.length} offers loaded`)
+        const start = Date.now()
+        const r     = await fetch(`${WORKER_URL}/api/offers`)
+        const ms    = Date.now() - start
+        allOffers   = await r.json()
+
+        // ── Log performance evidence
+        console.log(`[SupermarketAR] ${allOffers.length} offers loaded in ${ms}ms`)
+        console.log(`[SupermarketAR] X-KV-Latency: ${r.headers.get('X-KV-Latency')}ms`)
+        console.log(`[SupermarketAR] X-Total-Latency: ${r.headers.get('X-Total-Latency')}ms`)
+        console.log(`[SupermarketAR] X-Edge-Location: ${r.headers.get('X-Edge-Location')}`)
+        console.log(`[SupermarketAR] X-Network-Type: ${r.headers.get('X-Network-Type')}`)
     } catch (err) {
         console.error('[SupermarketAR] Failed to load offers:', err)
     } finally {
@@ -511,5 +519,23 @@ setInterval(async () => {
     allOffers = await r.json()
     console.log('[SupermarketAR] Offers refreshed')
 }, 30000)
+
+// ── Detect network type
+function detectNetwork() {
+    const conn = navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection
+    if (conn) {
+        console.log(`[Network] Type: ${conn.effectiveType}`)
+        console.log(`[Network] Downlink: ${conn.downlink}Mbps`)
+        console.log(`[Network] RTT: ${conn.rtt}ms`)
+        return conn.effectiveType
+    }
+    return 'unknown'
+}
+
+const networkType = detectNetwork()
+console.log(`[SupermarketAR] Running on network: ${networkType}`)
+
 // ── Start
 loadOffers()
